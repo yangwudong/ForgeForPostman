@@ -96,7 +96,7 @@ module.exports = {
 /* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(global) {/**
+/**
  * Utility functions for web applications.
  *
  * @author Dave Longley
@@ -104,7 +104,7 @@ module.exports = {
  * Copyright (c) 2010-2018 Digital Bazaar, Inc.
  */
 var forge = __webpack_require__(0);
-var baseN = __webpack_require__(37);
+var baseN = __webpack_require__(36);
 
 /* Utilities API */
 var util = module.exports = forge.util = forge.util || {};
@@ -207,19 +207,6 @@ var util = module.exports = forge.util = forge.util || {};
 // check if running under Node.js
 util.isNodejs =
   typeof process !== 'undefined' && process.versions && process.versions.node;
-
-
-// 'self' will also work in Web Workers (instance of WorkerGlobalScope) while
-// it will point to `window` in the main thread.
-// To remain compatible with older browsers, we fall back to 'window' if 'self'
-// is not available.
-util.globalScope = (function() {
-  if(util.isNodejs) {
-    return global;
-  }
-
-  return typeof self === 'undefined' ? window : self;
-})();
 
 // define isArray
 util.isArray = Array.isArray || function(x) {
@@ -377,7 +364,7 @@ util.ByteStringBuffer.prototype.fillWithByte = function(b, n) {
 /**
  * Puts bytes in this buffer.
  *
- * @param bytes the bytes (as a binary encoded string) to put.
+ * @param bytes the bytes (as a UTF-8 encoded string) to put.
  *
  * @return this buffer.
  */
@@ -665,13 +652,11 @@ util.ByteStringBuffer.prototype.getSignedInt = function(n) {
 };
 
 /**
- * Reads bytes out as a binary encoded string and clears them from the
- * buffer. Note that the resulting string is binary encoded (in node.js this
- * encoding is referred to as `binary`, it is *not* `utf8`).
+ * Reads bytes out into a UTF-8 string and clears them from the buffer.
  *
  * @param count the number of bytes to read, undefined or null for all.
  *
- * @return a binary encoded string of bytes.
+ * @return a UTF-8 string of bytes.
  */
 util.ByteStringBuffer.prototype.getBytes = function(count) {
   var rval;
@@ -691,12 +676,12 @@ util.ByteStringBuffer.prototype.getBytes = function(count) {
 };
 
 /**
- * Gets a binary encoded string of the bytes from this buffer without
- * modifying the read pointer.
+ * Gets a UTF-8 encoded string of the bytes from this buffer without modifying
+ * the read pointer.
  *
  * @param count the number of bytes to get, omit to get all.
  *
- * @return a string full of binary encoded characters.
+ * @return a string full of UTF-8 encoded characters.
  */
 util.ByteStringBuffer.prototype.bytes = function(count) {
   return (typeof(count) === 'undefined' ?
@@ -1328,12 +1313,11 @@ util.DataBuffer.prototype.getSignedInt = function(n) {
 };
 
 /**
- * Reads bytes out as a binary encoded string and clears them from the
- * buffer.
+ * Reads bytes out into a UTF-8 string and clears them from the buffer.
  *
  * @param count the number of bytes to read, undefined or null for all.
  *
- * @return a binary encoded string of bytes.
+ * @return a UTF-8 string of bytes.
  */
 util.DataBuffer.prototype.getBytes = function(count) {
   // TODO: deprecate this method, it is poorly named and
@@ -1356,12 +1340,12 @@ util.DataBuffer.prototype.getBytes = function(count) {
 };
 
 /**
- * Gets a binary encoded string of the bytes from this buffer without
- * modifying the read pointer.
+ * Gets a UTF-8 encoded string of the bytes from this buffer without modifying
+ * the read pointer.
  *
  * @param count the number of bytes to get, omit to get all.
  *
- * @return a string full of binary encoded characters.
+ * @return a string full of UTF-8 encoded characters.
  */
 util.DataBuffer.prototype.bytes = function(count) {
   // TODO: deprecate this method, it is poorly named, add "getString()"
@@ -1508,13 +1492,12 @@ util.DataBuffer.prototype.toString = function(encoding) {
 /** End Buffer w/UInt8Array backing */
 
 /**
- * Creates a buffer that stores bytes. A value may be given to populate the
- * buffer with data. This value can either be string of encoded bytes or a
- * regular string of characters. When passing a string of binary encoded
- * bytes, the encoding `raw` should be given. This is also the default. When
- * passing a string of characters, the encoding `utf8` should be given.
+ * Creates a buffer that stores bytes. A value may be given to put into the
+ * buffer that is either a string of bytes or a UTF-16 string that will
+ * be encoded using UTF-8 (to do the latter, specify 'utf8' as the encoding).
  *
- * @param [input] a string with encoded bytes to store in the buffer.
+ * @param [input] the bytes to wrap (as a string) or a UTF-16 string to encode
+ *          as UTF-8.
  * @param [encoding] (default: 'raw', other: 'utf8').
  */
 util.createBuffer = function(input, encoding) {
@@ -1743,27 +1726,24 @@ util.decode64 = function(input) {
 };
 
 /**
- * Encodes the given string of characters (a standard JavaScript
- * string) as a binary encoded string where the bytes represent
- * a UTF-8 encoded string of characters. Non-ASCII characters will be
- * encoded as multiple bytes according to UTF-8.
+ * UTF-8 encodes the given UTF-16 encoded string (a standard JavaScript
+ * string). Non-ASCII characters will be encoded as multiple bytes according
+ * to UTF-8.
  *
- * @param str a standard string of characters to encode.
+ * @param str the string to encode.
  *
- * @return the binary encoded string.
+ * @return the UTF-8 encoded string.
  */
 util.encodeUtf8 = function(str) {
   return unescape(encodeURIComponent(str));
 };
 
 /**
- * Decodes a binary encoded string that contains bytes that
- * represent a UTF-8 encoded string of characters -- into a
- * string of characters (a standard JavaScript string).
+ * Decodes a UTF-8 encoded string into a UTF-16 string.
  *
- * @param str the binary encoded string to decode.
+ * @param str the string to decode.
  *
- * @return the resulting standard string of characters.
+ * @return the UTF-16 encoded string (standard JavaScript string).
  */
 util.decodeUtf8 = function(str) {
   return decodeURIComponent(escape(str));
@@ -3097,7 +3077,6 @@ util.estimateCores = function(options, callback) {
   }
 };
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(36)))
 
 /***/ }),
 /* 2 */
@@ -3220,14 +3199,14 @@ var _ctx = spawnPrng();
 // add other sources of entropy only if window.crypto.getRandomValues is not
 // available -- otherwise this source will be automatically used by the prng
 var getRandomValues = null;
-var globalScope = forge.util.globalScope;
-var _crypto = globalScope.crypto || globalScope.msCrypto;
-if(_crypto && _crypto.getRandomValues) {
-  getRandomValues = function(arr) {
-    return _crypto.getRandomValues(arr);
-  };
+if(typeof window !== 'undefined') {
+  var _crypto = window.crypto || window.msCrypto;
+  if(_crypto && _crypto.getRandomValues) {
+    getRandomValues = function(arr) {
+      return _crypto.getRandomValues(arr);
+    };
+  }
 }
-
 if(forge.options.usePureJavaScript ||
   (!forge.util.isNodejs && !getRandomValues)) {
   // if this is a web worker, do not use weak entropy, instead register to
@@ -3921,7 +3900,7 @@ function _fromDer(bytes, remaining, depth, options) {
   }
 
   // add BIT STRING contents if available
-  var asn1Options = bitStringContents === undefined ? null : {
+  var asn1Options = bitStringContents === undefined ?  null : {
     bitStringContents: bitStringContents
   };
 
@@ -4750,7 +4729,7 @@ forge.md.algorithms = forge.md.algorithms || {};
  */
 var forge = __webpack_require__(0);
 __webpack_require__(13);
-__webpack_require__(19);
+__webpack_require__(18);
 __webpack_require__(1);
 
 /* AES API */
@@ -5381,7 +5360,7 @@ function initialize() {
  * of Nb*(Nr + 1) words: the algorithm requires an initial set of Nb words,
  * and each of the Nr rounds requires Nb words of key data. The resulting
  * key schedule consists of a linear array of 4-byte words, denoted [wi ],
- * with i in the range 0 <= i < Nb(Nr + 1).
+ * with i in the range 0 ≤ i < Nb(Nr + 1).
  *
  * KeyExpansion(byte key[4*Nk], word w[Nb*(Nr+1)], Nk)
  * AES-128 (Nb=4, Nk=4, Nr=10)
@@ -5437,7 +5416,7 @@ function _expandKey(key, decrypt) {
     w[i] = w[i - Nk] ^ temp;
   }
 
-  /* When we are updating a cipher block we always use the code path for
+   /* When we are updating a cipher block we always use the code path for
      encryption whether we are decrypting or not (to shorten code and
      simplify the generation of look up tables). However, because there
      are differences in the decryption algorithm, other than just swapping
@@ -5538,7 +5517,7 @@ function _updateBlock(w, input, output, decrypt) {
     byte state[4,Nb]
     state = in
     AddRoundKey(state, w[0, Nb-1])
-    for round = 1 step 1 to Nr-1
+    for round = 1 step 1 to Nr–1
       SubBytes(state)
       ShiftRows(state)
       MixColumns(state)
@@ -5750,7 +5729,7 @@ function _updateBlock(w, input, output, decrypt) {
     InvSubBytes(state)
     AddRoundKey(state, w[0, Nb-1])
    */
-  // Note: rows are shifted inline
+   // Note: rows are shifted inline
   output[0] =
     (sub[a >>> 24] << 24) ^
     (sub[b >>> 16 & 255] << 16) ^
@@ -5864,8 +5843,6 @@ _IN('1.2.840.113549.1.1.10', 'RSASSA-PSS');
 _IN('1.2.840.113549.1.1.11', 'sha256WithRSAEncryption');
 _IN('1.2.840.113549.1.1.12', 'sha384WithRSAEncryption');
 _IN('1.2.840.113549.1.1.13', 'sha512WithRSAEncryption');
-// Edwards-curve Digital Signature Algorithm (EdDSA) Ed25519
-_IN('1.3.101.112', 'EdDSA25519');
 
 _IN('1.2.840.10040.4.3', 'dsa-with-sha1');
 
@@ -5938,18 +5915,11 @@ _IN('2.5.4.5', 'serialName');
 _IN('2.5.4.6', 'countryName');
 _IN('2.5.4.7', 'localityName');
 _IN('2.5.4.8', 'stateOrProvinceName');
-_IN('2.5.4.9', 'streetAddress');
 _IN('2.5.4.10', 'organizationName');
 _IN('2.5.4.11', 'organizationalUnitName');
-_IN('2.5.4.13', 'description');
-_IN('2.5.4.15', 'businessCategory');
-_IN('2.5.4.17', 'postalCode');
-_IN('1.3.6.1.4.1.311.60.2.1.2', 'jurisdictionOfIncorporationStateOrProvinceName');
-_IN('1.3.6.1.4.1.311.60.2.1.3', 'jurisdictionOfIncorporationCountryName');
 
 // X.509 extension OIDs
 _IN('2.16.840.1.113730.1.1', 'nsCertType');
-_IN('2.16.840.1.113730.1.13', 'nsComment'); // deprecated in theory; still widely used
 _I_('2.5.29.1', 'authorityKeyIdentifier'); // deprecated, use .35
 _I_('2.5.29.2', 'keyAttributes'); // obsolete use .37 or .15
 _I_('2.5.29.3', 'certificatePolicies'); // deprecated, use .32
@@ -6507,12 +6477,12 @@ sha1.create = function() {
     return md;
   };
 
-  /**
-   * Produces the digest.
-   *
-   * @return a byte buffer containing the digest value.
-   */
-  md.digest = function() {
+   /**
+    * Produces the digest.
+    *
+    * @return a byte buffer containing the digest value.
+    */
+   md.digest = function() {
     /* Note: Here we copy the remaining bytes in the input buffer and
     add the appropriate SHA-1 padding. Then we do the final update
     on a copy of the state so that if the user wants to get
@@ -6726,8 +6696,7 @@ function _update(s, w, bytes) {
  * Paul Tero, July 2001
  * http://www.tero.co.uk/des/
  *
- * Optimised for performance with large blocks by
- * Michael Hayworth, November 2001
+ * Optimised for performance with large blocks by Michael Hayworth, November 2001
  * http://www.netdealing.com
  *
  * THIS SOFTWARE IS PROVIDED "AS IS" AND
@@ -6750,7 +6719,7 @@ function _update(s, w, bytes) {
  */
 var forge = __webpack_require__(0);
 __webpack_require__(13);
-__webpack_require__(19);
+__webpack_require__(18);
 __webpack_require__(1);
 
 /* DES API */
@@ -7295,13 +7264,8 @@ if(typeof BigInteger === 'undefined') {
   var BigInteger = forge.jsbn.BigInteger;
 }
 
-var _crypto = forge.util.isNodejs ? __webpack_require__(16) : null;
-
 // shortcut for asn.1 API
 var asn1 = forge.asn1;
-
-// shortcut for util API
-var util = forge.util;
 
 /*
  * RSA encryption and decryption, see RFC 2313.
@@ -7908,7 +7872,7 @@ pki.rsa.stepKeyPairGenerationState = function(state, n) {
   var THIRTY = new BigInteger(null);
   THIRTY.fromInt(30);
   var deltaIdx = 0;
-  var op_or = function(x, y) {return x | y;};
+  var op_or = function(x, y) { return x|y; };
 
   // keep stepping until time limit is reached or done
   var t1 = +new Date();
@@ -7957,7 +7921,7 @@ pki.rsa.stepKeyPairGenerationState = function(state, n) {
         // ensure number is coprime with e
         state.pqState =
           (state.num.subtract(BigInteger.ONE).gcd(state.e)
-            .compareTo(BigInteger.ONE) === 0) ? 3 : 0;
+          .compareTo(BigInteger.ONE) === 0) ? 3 : 0;
       } else if(state.pqState === 3) {
         // store p or q
         state.pqState = 0;
@@ -8046,7 +8010,7 @@ pki.rsa.stepKeyPairGenerationState = function(state, n) {
  * @param [bits] the size for the private key in bits, defaults to 2048.
  * @param [e] the public exponent to use, defaults to 65537.
  * @param [options] options for key-pair generation, if given then 'bits'
- *            and 'e' must *not* be given:
+ *          and 'e' must *not* be given:
  *          bits the size for the private key in bits, (default: 2048).
  *          e the public exponent to use, (default: 65537 (0x10001)).
  *          workerScript the worker script URL.
@@ -8056,7 +8020,7 @@ pki.rsa.stepKeyPairGenerationState = function(state, n) {
  *            numbers for each web worker to check per work assignment,
  *            (default: 100).
  *          prng a custom crypto-secure pseudo-random number generator to use,
- *            that must define "getBytesSync". Disables use of native APIs.
+ *            that must define "getBytesSync".
  *          algorithm the algorithm to use (default: 'PRIMEINC').
  * @param [callback(err, keypair)] called once the operation completes.
  *
@@ -8109,109 +8073,63 @@ pki.rsa.generateKeyPair = function(bits, e, options, callback) {
     e = options.e || 0x10001;
   }
 
-  // use native code if permitted, available, and parameters are acceptable
-  if(!forge.options.usePureJavaScript && !options.prng &&
+  // if native code is permitted and a callback is given, use native
+  // key generation code if available and if parameters are acceptable
+  if(!forge.options.usePureJavaScript && callback &&
     bits >= 256 && bits <= 16384 && (e === 0x10001 || e === 3)) {
-    if(callback) {
-      // try native async
-      if(_detectNodeCrypto('generateKeyPair')) {
-        return _crypto.generateKeyPair('rsa', {
-          modulusLength: bits,
-          publicExponent: e,
-          publicKeyEncoding: {
-            type: 'spki',
-            format: 'pem'
-          },
-          privateKeyEncoding: {
-            type: 'pkcs8',
-            format: 'pem'
-          }
-        }, function(err, pub, priv) {
-          if(err) {
-            return callback(err);
-          }
+    if(_detectSubtleCrypto('generateKey') && _detectSubtleCrypto('exportKey')) {
+      // use standard native generateKey
+      return window.crypto.subtle.generateKey({
+        name: 'RSASSA-PKCS1-v1_5',
+        modulusLength: bits,
+        publicExponent: _intToUint8Array(e),
+        hash: {name: 'SHA-256'}
+      }, true /* key can be exported*/, ['sign', 'verify'])
+      .then(function(pair) {
+        return window.crypto.subtle.exportKey('pkcs8', pair.privateKey);
+      // avoiding catch(function(err) {...}) to support IE <= 8
+      }).then(undefined, function(err) {
+        callback(err);
+      }).then(function(pkcs8) {
+        if(pkcs8) {
+          var privateKey = pki.privateKeyFromAsn1(
+            asn1.fromDer(forge.util.createBuffer(pkcs8)));
           callback(null, {
-            privateKey: pki.privateKeyFromPem(priv),
-            publicKey: pki.publicKeyFromPem(pub)
+            privateKey: privateKey,
+            publicKey: pki.setRsaPublicKey(privateKey.n, privateKey.e)
           });
-        });
-      }
-      if(_detectSubtleCrypto('generateKey') &&
-        _detectSubtleCrypto('exportKey')) {
-        // use standard native generateKey
-        return util.globalScope.crypto.subtle.generateKey({
-          name: 'RSASSA-PKCS1-v1_5',
-          modulusLength: bits,
-          publicExponent: _intToUint8Array(e),
-          hash: {name: 'SHA-256'}
-        }, true /* key can be exported*/, ['sign', 'verify'])
-        .then(function(pair) {
-          return util.globalScope.crypto.subtle.exportKey(
-            'pkcs8', pair.privateKey);
-        // avoiding catch(function(err) {...}) to support IE <= 8
-        }).then(undefined, function(err) {
-          callback(err);
-        }).then(function(pkcs8) {
-          if(pkcs8) {
-            var privateKey = pki.privateKeyFromAsn1(
-              asn1.fromDer(forge.util.createBuffer(pkcs8)));
-            callback(null, {
-              privateKey: privateKey,
-              publicKey: pki.setRsaPublicKey(privateKey.n, privateKey.e)
-            });
-          }
-        });
-      }
-      if(_detectSubtleMsCrypto('generateKey') &&
-        _detectSubtleMsCrypto('exportKey')) {
-        var genOp = util.globalScope.msCrypto.subtle.generateKey({
-          name: 'RSASSA-PKCS1-v1_5',
-          modulusLength: bits,
-          publicExponent: _intToUint8Array(e),
-          hash: {name: 'SHA-256'}
-        }, true /* key can be exported*/, ['sign', 'verify']);
-        genOp.oncomplete = function(e) {
-          var pair = e.target.result;
-          var exportOp = util.globalScope.msCrypto.subtle.exportKey(
-            'pkcs8', pair.privateKey);
-          exportOp.oncomplete = function(e) {
-            var pkcs8 = e.target.result;
-            var privateKey = pki.privateKeyFromAsn1(
-              asn1.fromDer(forge.util.createBuffer(pkcs8)));
-            callback(null, {
-              privateKey: privateKey,
-              publicKey: pki.setRsaPublicKey(privateKey.n, privateKey.e)
-            });
-          };
-          exportOp.onerror = function(err) {
-            callback(err);
-          };
+        }
+      });
+    }
+    if(_detectSubtleMsCrypto('generateKey') &&
+      _detectSubtleMsCrypto('exportKey')) {
+      var genOp = window.msCrypto.subtle.generateKey({
+        name: 'RSASSA-PKCS1-v1_5',
+        modulusLength: bits,
+        publicExponent: _intToUint8Array(e),
+        hash: {name: 'SHA-256'}
+      }, true /* key can be exported*/, ['sign', 'verify']);
+      genOp.oncomplete = function(e) {
+        var pair = e.target.result;
+        var exportOp = window.msCrypto.subtle.exportKey(
+          'pkcs8', pair.privateKey);
+        exportOp.oncomplete = function(e) {
+          var pkcs8 = e.target.result;
+          var privateKey = pki.privateKeyFromAsn1(
+            asn1.fromDer(forge.util.createBuffer(pkcs8)));
+          callback(null, {
+            privateKey: privateKey,
+            publicKey: pki.setRsaPublicKey(privateKey.n, privateKey.e)
+          });
         };
-        genOp.onerror = function(err) {
+        exportOp.onerror = function(err) {
           callback(err);
         };
-        return;
-      }
-    } else {
-      // try native sync
-      if(_detectNodeCrypto('generateKeyPairSync')) {
-        var keypair = _crypto.generateKeyPairSync('rsa', {
-          modulusLength: bits,
-          publicExponent: e,
-          publicKeyEncoding: {
-            type: 'spki',
-            format: 'pem'
-          },
-          privateKeyEncoding: {
-            type: 'pkcs8',
-            format: 'pem'
-          }
-        });
-        return {
-          privateKey: pki.privateKeyFromPem(keypair.privateKey),
-          publicKey: pki.publicKeyFromPem(keypair.publicKey)
-        };
-      }
+      };
+      genOp.onerror = function(err) {
+        callback(err);
+      };
+      return;
     }
   }
 
@@ -8275,7 +8193,7 @@ pki.setRsaPublicKey = pki.rsa.setPublicKey = function(n, e) {
         }
       };
     } else if(['RAW', 'NONE', 'NULL', null].indexOf(scheme) !== -1) {
-      scheme = {encode: function(e) {return e;}};
+      scheme = { encode: function(e) { return e; } };
     } else if(typeof scheme === 'string') {
       throw new Error('Unsupported encryption scheme: "' + scheme + '".');
     }
@@ -8316,37 +8234,37 @@ pki.setRsaPublicKey = pki.rsa.setPublicKey = function(n, e) {
    *
    * @return true if the signature was verified, false if not.
    */
-  key.verify = function(digest, signature, scheme) {
-    if(typeof scheme === 'string') {
-      scheme = scheme.toUpperCase();
-    } else if(scheme === undefined) {
-      scheme = 'RSASSA-PKCS1-V1_5';
-    }
+   key.verify = function(digest, signature, scheme) {
+     if(typeof scheme === 'string') {
+       scheme = scheme.toUpperCase();
+     } else if(scheme === undefined) {
+       scheme = 'RSASSA-PKCS1-V1_5';
+     }
 
-    if(scheme === 'RSASSA-PKCS1-V1_5') {
-      scheme = {
-        verify: function(digest, d) {
-          // remove padding
-          d = _decodePkcs1_v1_5(d, key, true);
-          // d is ASN.1 BER-encoded DigestInfo
-          var obj = asn1.fromDer(d);
-          // compare the given digest to the decrypted one
-          return digest === obj.value[1].value;
-        }
-      };
-    } else if(scheme === 'NONE' || scheme === 'NULL' || scheme === null) {
-      scheme = {
-        verify: function(digest, d) {
-          // remove padding
-          d = _decodePkcs1_v1_5(d, key, true);
-          return digest === d;
-        }
-      };
-    }
+     if(scheme === 'RSASSA-PKCS1-V1_5') {
+       scheme = {
+         verify: function(digest, d) {
+           // remove padding
+           d = _decodePkcs1_v1_5(d, key, true);
+           // d is ASN.1 BER-encoded DigestInfo
+           var obj = asn1.fromDer(d);
+           // compare the given digest to the decrypted one
+           return digest === obj.value[1].value;
+         }
+       };
+     } else if(scheme === 'NONE' || scheme === 'NULL' || scheme === null) {
+       scheme = {
+         verify: function(digest, d) {
+           // remove padding
+           d = _decodePkcs1_v1_5(d, key, true);
+           return digest === d;
+         }
+       };
+     }
 
-    // do rsa decryption w/o any decoding, then verify -- which does decoding
-    var d = pki.rsa.decrypt(signature, key, true, false);
-    return scheme.verify(digest, d, key.n.bitLength());
+     // do rsa decryption w/o any decoding, then verify -- which does decoding
+     var d = pki.rsa.decrypt(signature, key, true, false);
+     return scheme.verify(digest, d, key.n.bitLength());
   };
 
   return key;
@@ -8404,7 +8322,7 @@ pki.setRsaPrivateKey = pki.rsa.setPrivateKey = function(
     var d = pki.rsa.decrypt(data, key, false, false);
 
     if(scheme === 'RSAES-PKCS1-V1_5') {
-      scheme = {decode: _decodePkcs1_v1_5};
+      scheme = { decode: _decodePkcs1_v1_5 };
     } else if(scheme === 'RSA-OAEP' || scheme === 'RSAES-OAEP') {
       scheme = {
         decode: function(d, key) {
@@ -8412,7 +8330,7 @@ pki.setRsaPrivateKey = pki.rsa.setPrivateKey = function(
         }
       };
     } else if(['RAW', 'NONE', 'NULL', null].indexOf(scheme) !== -1) {
-      scheme = {decode: function(d) {return d;}};
+      scheme = { decode: function(d) { return d; } };
     } else {
       throw new Error('Unsupported encryption scheme: "' + scheme + '".');
     }
@@ -8454,10 +8372,10 @@ pki.setRsaPrivateKey = pki.rsa.setPrivateKey = function(
     }
 
     if(scheme === undefined || scheme === 'RSASSA-PKCS1-V1_5') {
-      scheme = {encode: emsaPkcs1v15encode};
+      scheme = { encode: emsaPkcs1v15encode };
       bt = 0x01;
     } else if(scheme === 'NONE' || scheme === 'NULL' || scheme === null) {
-      scheme = {encode: function() {return md;}};
+      scheme = { encode: function() { return md; } };
       bt = 0x01;
     }
 
@@ -8492,7 +8410,7 @@ pki.wrapRsaPrivateKey = function(rsaKey) {
     // PrivateKey
     asn1.create(asn1.Class.UNIVERSAL, asn1.Type.OCTETSTRING, false,
       asn1.toDer(rsaKey).getBytes())
-  ]);
+    ]);
 };
 
 /**
@@ -9000,17 +8918,6 @@ function _getMillerRabinTests(bits) {
 }
 
 /**
- * Performs feature detection on the Node crypto interface.
- *
- * @param fn the feature (function) to detect.
- *
- * @return true if detected, false if not.
- */
-function _detectNodeCrypto(fn) {
-  return forge.util.isNodejs && typeof _crypto[fn] === 'function';
-}
-
-/**
  * Performs feature detection on the SubtleCrypto interface.
  *
  * @param fn the feature (function) to detect.
@@ -9018,10 +8925,10 @@ function _detectNodeCrypto(fn) {
  * @return true if detected, false if not.
  */
 function _detectSubtleCrypto(fn) {
-  return (typeof util.globalScope !== 'undefined' &&
-    typeof util.globalScope.crypto === 'object' &&
-    typeof util.globalScope.crypto.subtle === 'object' &&
-    typeof util.globalScope.crypto.subtle[fn] === 'function');
+  return (typeof window !== 'undefined' &&
+    typeof window.crypto === 'object' &&
+    typeof window.crypto.subtle === 'object' &&
+    typeof window.crypto.subtle[fn] === 'function');
 }
 
 /**
@@ -9034,10 +8941,10 @@ function _detectSubtleCrypto(fn) {
  * @return true if detected, false if not.
  */
 function _detectSubtleMsCrypto(fn) {
-  return (typeof util.globalScope !== 'undefined' &&
-    typeof util.globalScope.msCrypto === 'object' &&
-    typeof util.globalScope.msCrypto.subtle === 'object' &&
-    typeof util.globalScope.msCrypto.subtle[fn] === 'function');
+  return (typeof window !== 'undefined' &&
+    typeof window.msCrypto === 'object' &&
+    typeof window.msCrypto.subtle === 'object' &&
+    typeof window.msCrypto.subtle[fn] === 'function');
 }
 
 function _intToUint8Array(x) {
@@ -10902,7 +10809,7 @@ var pkcs5 = forge.pkcs5 = forge.pkcs5 || {};
 
 var crypto;
 if(forge.util.isNodejs && !forge.options.usePureJavaScript) {
-  crypto = __webpack_require__(16);
+  crypto = __webpack_require__(22);
 }
 
 /**
@@ -10937,8 +10844,8 @@ module.exports = forge.pbkdf2 = pkcs5.pbkdf2 = function(
       // default prf to SHA-1
       md = 'sha1';
     }
-    p = Buffer.from(p, 'binary');
-    s = Buffer.from(s, 'binary');
+    p = new Buffer(p, 'binary');
+    s = new Buffer(s, 'binary');
     if(!callback) {
       if(crypto.pbkdf2Sync.length === 4) {
         return crypto.pbkdf2Sync(p, s, c, dkLen).toString('binary');
@@ -11099,12 +11006,6 @@ module.exports = forge.pbkdf2 = pkcs5.pbkdf2 = function(
 
 /***/ }),
 /* 16 */
-/***/ (function(module, exports) {
-
-/* (ignored) */
-
-/***/ }),
-/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -11221,10 +11122,10 @@ __webpack_require__(5);
 __webpack_require__(3);
 __webpack_require__(10);
 __webpack_require__(4);
-__webpack_require__(39);
+__webpack_require__(38);
 __webpack_require__(6);
 __webpack_require__(7);
-__webpack_require__(18);
+__webpack_require__(17);
 __webpack_require__(11);
 __webpack_require__(1);
 
@@ -11360,8 +11261,8 @@ var x509CertificateValidator = {
       constructed: true,
       captureAsn1: 'certSubject'
     },
-    // SubjectPublicKeyInfo
-    publicKeyValidator,
+      // SubjectPublicKeyInfo
+      publicKeyValidator,
     {
       // issuerUniqueID (optional)
       name: 'Certificate.TBSCertificate.issuerUniqueID',
@@ -11573,33 +11474,32 @@ var certificationRequestValidator = {
   captureAsn1: 'csr',
   value: [
     certificationRequestInfoValidator, {
-      // AlgorithmIdentifier (signature algorithm)
-      name: 'CertificationRequest.signatureAlgorithm',
+    // AlgorithmIdentifier (signature algorithm)
+    name: 'CertificationRequest.signatureAlgorithm',
+    tagClass: asn1.Class.UNIVERSAL,
+    type: asn1.Type.SEQUENCE,
+    constructed: true,
+    value: [{
+      // algorithm
+      name: 'CertificationRequest.signatureAlgorithm.algorithm',
       tagClass: asn1.Class.UNIVERSAL,
-      type: asn1.Type.SEQUENCE,
-      constructed: true,
-      value: [{
-        // algorithm
-        name: 'CertificationRequest.signatureAlgorithm.algorithm',
-        tagClass: asn1.Class.UNIVERSAL,
-        type: asn1.Type.OID,
-        constructed: false,
-        capture: 'csrSignatureOid'
-      }, {
-        name: 'CertificationRequest.signatureAlgorithm.parameters',
-        tagClass: asn1.Class.UNIVERSAL,
-        optional: true,
-        captureAsn1: 'csrSignatureParams'
-      }]
-    }, {
-      // signature
-      name: 'CertificationRequest.signature',
-      tagClass: asn1.Class.UNIVERSAL,
-      type: asn1.Type.BITSTRING,
+      type: asn1.Type.OID,
       constructed: false,
-      captureBitStringValue: 'csrSignature'
-    }
-  ]
+      capture: 'csrSignatureOid'
+    }, {
+      name: 'CertificationRequest.signatureAlgorithm.parameters',
+      tagClass: asn1.Class.UNIVERSAL,
+      optional: true,
+      captureAsn1: 'csrSignatureParams'
+    }]
+  }, {
+    // signature
+    name: 'CertificationRequest.signature',
+    tagClass: asn1.Class.UNIVERSAL,
+    type: asn1.Type.BITSTRING,
+    constructed: false,
+    captureBitStringValue: 'csrSignature'
+  }]
 };
 
 /**
@@ -11819,15 +11719,13 @@ pki.certificateFromPem = function(pem, computeHash, strict) {
   if(msg.type !== 'CERTIFICATE' &&
     msg.type !== 'X509 CERTIFICATE' &&
     msg.type !== 'TRUSTED CERTIFICATE') {
-    var error = new Error(
-      'Could not convert certificate from PEM; PEM header type ' +
+    var error = new Error('Could not convert certificate from PEM; PEM header type ' +
       'is not "CERTIFICATE", "X509 CERTIFICATE", or "TRUSTED CERTIFICATE".');
     error.headerType = msg.type;
     throw error;
   }
   if(msg.procType && msg.procType.type === 'ENCRYPTED') {
-    throw new Error(
-      'Could not convert certificate from PEM; PEM is encrypted.');
+    throw new Error('Could not convert certificate from PEM; PEM is encrypted.');
   }
 
   // convert DER to ASN.1 object
@@ -11934,14 +11832,14 @@ pki.getPublicKeyFingerprint = function(key, options) {
 
   var bytes;
   switch(type) {
-    case 'RSAPublicKey':
-      bytes = asn1.toDer(pki.publicKeyToRSAPublicKey(key)).getBytes();
-      break;
-    case 'SubjectPublicKeyInfo':
-      bytes = asn1.toDer(pki.publicKeyToAsn1(key)).getBytes();
-      break;
-    default:
-      throw new Error('Unknown fingerprint type "' + options.type + '".');
+  case 'RSAPublicKey':
+    bytes = asn1.toDer(pki.publicKeyToRSAPublicKey(key)).getBytes();
+    break;
+  case 'SubjectPublicKeyInfo':
+    bytes = asn1.toDer(pki.publicKeyToAsn1(key)).getBytes();
+    break;
+  default:
+    throw new Error('Unknown fingerprint type "' + options.type + '".');
   }
 
   // hash public key bytes
@@ -12174,8 +12072,7 @@ pki.createCertificate = function() {
     if(!cert.issued(child)) {
       var issuer = child.issuer;
       var subject = cert.subject;
-      var error = new Error(
-        'The parent certificate did not issue the given child ' +
+      var error = new Error('The parent certificate did not issue the given child ' +
         'certificate; the child certificate\'s issuer does not match the ' +
         'parent\'s subject.');
       error.expectedIssuer = issuer.attributes;
@@ -12189,24 +12086,24 @@ pki.createCertificate = function() {
       if(child.signatureOid in oids) {
         var oid = oids[child.signatureOid];
         switch(oid) {
-          case 'sha1WithRSAEncryption':
-            md = forge.md.sha1.create();
-            break;
-          case 'md5WithRSAEncryption':
-            md = forge.md.md5.create();
-            break;
-          case 'sha256WithRSAEncryption':
-            md = forge.md.sha256.create();
-            break;
-          case 'sha384WithRSAEncryption':
-            md = forge.md.sha384.create();
-            break;
-          case 'sha512WithRSAEncryption':
-            md = forge.md.sha512.create();
-            break;
-          case 'RSASSA-PSS':
-            md = forge.md.sha256.create();
-            break;
+        case 'sha1WithRSAEncryption':
+          md = forge.md.sha1.create();
+          break;
+        case 'md5WithRSAEncryption':
+          md = forge.md.md5.create();
+          break;
+        case 'sha256WithRSAEncryption':
+          md = forge.md.sha256.create();
+          break;
+        case 'sha384WithRSAEncryption':
+          md = forge.md.sha384.create();
+          break;
+        case 'sha512WithRSAEncryption':
+          md = forge.md.sha512.create();
+          break;
+        case 'RSASSA-PSS':
+          md = forge.md.sha256.create();
+          break;
         }
       }
       if(md === null) {
@@ -12226,44 +12123,44 @@ pki.createCertificate = function() {
       var scheme;
 
       switch(child.signatureOid) {
-        case oids.sha1WithRSAEncryption:
-          scheme = undefined; /* use PKCS#1 v1.5 padding scheme */
-          break;
-        case oids['RSASSA-PSS']:
-          var hash, mgf;
+      case oids.sha1WithRSAEncryption:
+        scheme = undefined;  /* use PKCS#1 v1.5 padding scheme */
+        break;
+      case oids['RSASSA-PSS']:
+        var hash, mgf;
 
-          /* initialize mgf */
-          hash = oids[child.signatureParameters.mgf.hash.algorithmOid];
-          if(hash === undefined || forge.md[hash] === undefined) {
-            var error = new Error('Unsupported MGF hash function.');
-            error.oid = child.signatureParameters.mgf.hash.algorithmOid;
-            error.name = hash;
-            throw error;
-          }
+        /* initialize mgf */
+        hash = oids[child.signatureParameters.mgf.hash.algorithmOid];
+        if(hash === undefined || forge.md[hash] === undefined) {
+          var error = new Error('Unsupported MGF hash function.');
+          error.oid = child.signatureParameters.mgf.hash.algorithmOid;
+          error.name = hash;
+          throw error;
+        }
 
-          mgf = oids[child.signatureParameters.mgf.algorithmOid];
-          if(mgf === undefined || forge.mgf[mgf] === undefined) {
-            var error = new Error('Unsupported MGF function.');
-            error.oid = child.signatureParameters.mgf.algorithmOid;
-            error.name = mgf;
-            throw error;
-          }
+        mgf = oids[child.signatureParameters.mgf.algorithmOid];
+        if(mgf === undefined || forge.mgf[mgf] === undefined) {
+          var error = new Error('Unsupported MGF function.');
+          error.oid = child.signatureParameters.mgf.algorithmOid;
+          error.name = mgf;
+          throw error;
+        }
 
-          mgf = forge.mgf[mgf].create(forge.md[hash].create());
+        mgf = forge.mgf[mgf].create(forge.md[hash].create());
 
-          /* initialize hash function */
-          hash = oids[child.signatureParameters.hash.algorithmOid];
-          if(hash === undefined || forge.md[hash] === undefined) {
-            throw {
-              message: 'Unsupported RSASSA-PSS hash function.',
-              oid: child.signatureParameters.hash.algorithmOid,
-              name: hash
-            };
-          }
+        /* initialize hash function */
+        hash = oids[child.signatureParameters.hash.algorithmOid];
+        if(hash === undefined || forge.md[hash] === undefined) {
+          throw {
+            message: 'Unsupported RSASSA-PSS hash function.',
+            oid: child.signatureParameters.hash.algorithmOid,
+            name: hash
+          };
+        }
 
-          scheme = forge.pss.create(forge.md[hash].create(), mgf,
-            child.signatureParameters.saltLength);
-          break;
+        scheme = forge.pss.create(forge.md[hash].create(), mgf,
+          child.signatureParameters.saltLength);
+        break;
       }
 
       // verify signature on cert using public key
@@ -12447,24 +12344,24 @@ pki.certificateFromAsn1 = function(obj, computeHash) {
     if(cert.signatureOid in oids) {
       var oid = oids[cert.signatureOid];
       switch(oid) {
-        case 'sha1WithRSAEncryption':
-          cert.md = forge.md.sha1.create();
-          break;
-        case 'md5WithRSAEncryption':
-          cert.md = forge.md.md5.create();
-          break;
-        case 'sha256WithRSAEncryption':
-          cert.md = forge.md.sha256.create();
-          break;
-        case 'sha384WithRSAEncryption':
-          cert.md = forge.md.sha384.create();
-          break;
-        case 'sha512WithRSAEncryption':
-          cert.md = forge.md.sha512.create();
-          break;
-        case 'RSASSA-PSS':
-          cert.md = forge.md.sha256.create();
-          break;
+      case 'sha1WithRSAEncryption':
+        cert.md = forge.md.sha1.create();
+        break;
+      case 'md5WithRSAEncryption':
+        cert.md = forge.md.md5.create();
+        break;
+      case 'sha256WithRSAEncryption':
+        cert.md = forge.md.sha256.create();
+        break;
+      case 'sha384WithRSAEncryption':
+        cert.md = forge.md.sha384.create();
+        break;
+      case 'sha512WithRSAEncryption':
+        cert.md = forge.md.sha512.create();
+        break;
+      case 'RSASSA-PSS':
+        cert.md = forge.md.sha256.create();
+        break;
       }
     }
     if(cert.md === null) {
@@ -12711,24 +12608,24 @@ pki.certificateExtensionFromAsn1 = function(ext) {
 
         // Note: Support for types 1,2,6,7,8
         switch(gn.type) {
-          // rfc822Name
-          case 1:
-          // dNSName
-          case 2:
-          // uniformResourceIdentifier (URI)
-          case 6:
-            break;
-          // IPAddress
-          case 7:
-            // convert to IPv4/IPv6 string representation
-            altName.ip = forge.util.bytesToIP(gn.value);
-            break;
-          // registeredID
-          case 8:
-            altName.oid = asn1.derToOid(gn.value);
-            break;
-          default:
-            // unsupported
+        // rfc822Name
+        case 1:
+        // dNSName
+        case 2:
+        // uniformResourceIdentifier (URI)
+        case 6:
+          break;
+        // IPAddress
+        case 7:
+          // convert to IPv4/IPv6 string representation
+          altName.ip = forge.util.bytesToIP(gn.value);
+          break;
+        // registeredID
+        case 8:
+          altName.oid = asn1.derToOid(gn.value);
+          break;
+        default:
+          // unsupported
         }
       }
     } else if(e.name === 'subjectKeyIdentifier') {
@@ -12791,24 +12688,24 @@ pki.certificationRequestFromAsn1 = function(obj, computeHash) {
     if(csr.signatureOid in oids) {
       var oid = oids[csr.signatureOid];
       switch(oid) {
-        case 'sha1WithRSAEncryption':
-          csr.md = forge.md.sha1.create();
-          break;
-        case 'md5WithRSAEncryption':
-          csr.md = forge.md.md5.create();
-          break;
-        case 'sha256WithRSAEncryption':
-          csr.md = forge.md.sha256.create();
-          break;
-        case 'sha384WithRSAEncryption':
-          csr.md = forge.md.sha384.create();
-          break;
-        case 'sha512WithRSAEncryption':
-          csr.md = forge.md.sha512.create();
-          break;
-        case 'RSASSA-PSS':
-          csr.md = forge.md.sha256.create();
-          break;
+      case 'sha1WithRSAEncryption':
+        csr.md = forge.md.sha1.create();
+        break;
+      case 'md5WithRSAEncryption':
+        csr.md = forge.md.md5.create();
+        break;
+      case 'sha256WithRSAEncryption':
+        csr.md = forge.md.sha256.create();
+        break;
+      case 'sha384WithRSAEncryption':
+        csr.md = forge.md.sha384.create();
+        break;
+      case 'sha512WithRSAEncryption':
+        csr.md = forge.md.sha512.create();
+        break;
+      case 'RSASSA-PSS':
+        csr.md = forge.md.sha256.create();
+        break;
       }
     }
     if(csr.md === null) {
@@ -12961,29 +12858,28 @@ pki.createCertificationRequest = function() {
         // TODO: create DRY `OID to md` function
         var oid = oids[csr.signatureOid];
         switch(oid) {
-          case 'sha1WithRSAEncryption':
-            md = forge.md.sha1.create();
-            break;
-          case 'md5WithRSAEncryption':
-            md = forge.md.md5.create();
-            break;
-          case 'sha256WithRSAEncryption':
-            md = forge.md.sha256.create();
-            break;
-          case 'sha384WithRSAEncryption':
-            md = forge.md.sha384.create();
-            break;
-          case 'sha512WithRSAEncryption':
-            md = forge.md.sha512.create();
-            break;
-          case 'RSASSA-PSS':
-            md = forge.md.sha256.create();
-            break;
+        case 'sha1WithRSAEncryption':
+          md = forge.md.sha1.create();
+          break;
+        case 'md5WithRSAEncryption':
+          md = forge.md.md5.create();
+          break;
+        case 'sha256WithRSAEncryption':
+          md = forge.md.sha256.create();
+          break;
+        case 'sha384WithRSAEncryption':
+          md = forge.md.sha384.create();
+          break;
+        case 'sha512WithRSAEncryption':
+          md = forge.md.sha512.create();
+          break;
+        case 'RSASSA-PSS':
+          md = forge.md.sha256.create();
+          break;
         }
       }
       if(md === null) {
-        var error = new Error(
-          'Could not compute certification request digest. ' +
+        var error = new Error('Could not compute certification request digest. ' +
           'Unknown signature OID.');
         error.signatureOid = csr.signatureOid;
         throw error;
@@ -13000,43 +12896,43 @@ pki.createCertificationRequest = function() {
       var scheme;
 
       switch(csr.signatureOid) {
-        case oids.sha1WithRSAEncryption:
-          /* use PKCS#1 v1.5 padding scheme */
-          break;
-        case oids['RSASSA-PSS']:
-          var hash, mgf;
+      case oids.sha1WithRSAEncryption:
+        /* use PKCS#1 v1.5 padding scheme */
+        break;
+      case oids['RSASSA-PSS']:
+        var hash, mgf;
 
-          /* initialize mgf */
-          hash = oids[csr.signatureParameters.mgf.hash.algorithmOid];
-          if(hash === undefined || forge.md[hash] === undefined) {
-            var error = new Error('Unsupported MGF hash function.');
-            error.oid = csr.signatureParameters.mgf.hash.algorithmOid;
-            error.name = hash;
-            throw error;
-          }
+        /* initialize mgf */
+        hash = oids[csr.signatureParameters.mgf.hash.algorithmOid];
+        if(hash === undefined || forge.md[hash] === undefined) {
+          var error = new Error('Unsupported MGF hash function.');
+          error.oid = csr.signatureParameters.mgf.hash.algorithmOid;
+          error.name = hash;
+          throw error;
+        }
 
-          mgf = oids[csr.signatureParameters.mgf.algorithmOid];
-          if(mgf === undefined || forge.mgf[mgf] === undefined) {
-            var error = new Error('Unsupported MGF function.');
-            error.oid = csr.signatureParameters.mgf.algorithmOid;
-            error.name = mgf;
-            throw error;
-          }
+        mgf = oids[csr.signatureParameters.mgf.algorithmOid];
+        if(mgf === undefined || forge.mgf[mgf] === undefined) {
+          var error = new Error('Unsupported MGF function.');
+          error.oid = csr.signatureParameters.mgf.algorithmOid;
+          error.name = mgf;
+          throw error;
+        }
 
-          mgf = forge.mgf[mgf].create(forge.md[hash].create());
+        mgf = forge.mgf[mgf].create(forge.md[hash].create());
 
-          /* initialize hash function */
-          hash = oids[csr.signatureParameters.hash.algorithmOid];
-          if(hash === undefined || forge.md[hash] === undefined) {
-            var error = new Error('Unsupported RSASSA-PSS hash function.');
-            error.oid = csr.signatureParameters.hash.algorithmOid;
-            error.name = hash;
-            throw error;
-          }
+        /* initialize hash function */
+        hash = oids[csr.signatureParameters.hash.algorithmOid];
+        if(hash === undefined || forge.md[hash] === undefined) {
+          var error = new Error('Unsupported RSASSA-PSS hash function.');
+          error.oid = csr.signatureParameters.hash.algorithmOid;
+          error.name = hash;
+          throw error;
+        }
 
-          scheme = forge.pss.create(forge.md[hash].create(), mgf,
-            csr.signatureParameters.saltLength);
-          break;
+        scheme = forge.pss.create(forge.md[hash].create(), mgf,
+          csr.signatureParameters.saltLength);
+        break;
       }
 
       // verify signature on csr using its public key
@@ -13386,15 +13282,6 @@ function _fillMissingExtensionFields(e, options) {
         asn1.Class.CONTEXT_SPECIFIC, altName.type, false,
         value));
     }
-  } else if(e.name === 'nsComment' && options.cert) {
-    // sanity check value is ASCII (req'd) and not too big
-    if(!(/^[\x00-\x7F]*$/.test(e.comment)) ||
-      (e.comment.length < 1) || (e.comment.length > 128)) {
-      throw new Error('Invalid "nsComment" content.');
-    }
-    // IA5STRING opaque comment
-    e.value = asn1.create(
-      asn1.Class.UNIVERSAL, asn1.Type.IA5STRING, false, e.comment);
   } else if(e.name === 'subjectKeyIdentifier' && options.cert) {
     var ski = options.cert.generateSubjectKeyIdentifier();
     e.subjectKeyIdentifier = ski.toHex();
@@ -13431,17 +13318,15 @@ function _fillMissingExtensionFields(e, options) {
       seq.push(
         asn1.create(asn1.Class.CONTEXT_SPECIFIC, 2, false, serialNumber));
     }
-  } else if(e.name === 'cRLDistributionPoints') {
+  } else if (e.name === 'cRLDistributionPoints') {
     e.value = asn1.create(asn1.Class.UNIVERSAL, asn1.Type.SEQUENCE, true, []);
     var seq = e.value.value;
 
     // Create sub SEQUENCE of DistributionPointName
-    var subSeq = asn1.create(
-      asn1.Class.UNIVERSAL, asn1.Type.SEQUENCE, true, []);
+    var subSeq = asn1.create(asn1.Class.UNIVERSAL, asn1.Type.SEQUENCE, true, []);
 
     // Create fullName CHOICE
-    var fullNameGeneralNames = asn1.create(
-      asn1.Class.CONTEXT_SPECIFIC, 0, true, []);
+    var fullNameGeneralNames = asn1.create(asn1.Class.CONTEXT_SPECIFIC, 0, true, []);
     var altName;
     for(var n = 0; n < e.altNames.length; ++n) {
       altName = e.altNames[n];
@@ -13470,8 +13355,7 @@ function _fillMissingExtensionFields(e, options) {
     }
 
     // Add to the parent SEQUENCE
-    subSeq.value.push(asn1.create(
-      asn1.Class.CONTEXT_SPECIFIC, 0, true, [fullNameGeneralNames]));
+    subSeq.value.push(asn1.create(asn1.Class.CONTEXT_SPECIFIC, 0, true, [fullNameGeneralNames]));
     seq.push(subSeq);
   }
 
@@ -13494,44 +13378,44 @@ function _fillMissingExtensionFields(e, options) {
  */
 function _signatureParametersToAsn1(oid, params) {
   switch(oid) {
-    case oids['RSASSA-PSS']:
-      var parts = [];
+  case oids['RSASSA-PSS']:
+    var parts = [];
 
-      if(params.hash.algorithmOid !== undefined) {
-        parts.push(asn1.create(asn1.Class.CONTEXT_SPECIFIC, 0, true, [
+    if(params.hash.algorithmOid !== undefined) {
+      parts.push(asn1.create(asn1.Class.CONTEXT_SPECIFIC, 0, true, [
+        asn1.create(asn1.Class.UNIVERSAL, asn1.Type.SEQUENCE, true, [
+          asn1.create(asn1.Class.UNIVERSAL, asn1.Type.OID, false,
+            asn1.oidToDer(params.hash.algorithmOid).getBytes()),
+          asn1.create(asn1.Class.UNIVERSAL, asn1.Type.NULL, false, '')
+        ])
+      ]));
+    }
+
+    if(params.mgf.algorithmOid !== undefined) {
+      parts.push(asn1.create(asn1.Class.CONTEXT_SPECIFIC, 1, true, [
+        asn1.create(asn1.Class.UNIVERSAL, asn1.Type.SEQUENCE, true, [
+          asn1.create(asn1.Class.UNIVERSAL, asn1.Type.OID, false,
+            asn1.oidToDer(params.mgf.algorithmOid).getBytes()),
           asn1.create(asn1.Class.UNIVERSAL, asn1.Type.SEQUENCE, true, [
             asn1.create(asn1.Class.UNIVERSAL, asn1.Type.OID, false,
-              asn1.oidToDer(params.hash.algorithmOid).getBytes()),
+              asn1.oidToDer(params.mgf.hash.algorithmOid).getBytes()),
             asn1.create(asn1.Class.UNIVERSAL, asn1.Type.NULL, false, '')
           ])
-        ]));
-      }
+        ])
+      ]));
+    }
 
-      if(params.mgf.algorithmOid !== undefined) {
-        parts.push(asn1.create(asn1.Class.CONTEXT_SPECIFIC, 1, true, [
-          asn1.create(asn1.Class.UNIVERSAL, asn1.Type.SEQUENCE, true, [
-            asn1.create(asn1.Class.UNIVERSAL, asn1.Type.OID, false,
-              asn1.oidToDer(params.mgf.algorithmOid).getBytes()),
-            asn1.create(asn1.Class.UNIVERSAL, asn1.Type.SEQUENCE, true, [
-              asn1.create(asn1.Class.UNIVERSAL, asn1.Type.OID, false,
-                asn1.oidToDer(params.mgf.hash.algorithmOid).getBytes()),
-              asn1.create(asn1.Class.UNIVERSAL, asn1.Type.NULL, false, '')
-            ])
-          ])
-        ]));
-      }
+    if(params.saltLength !== undefined) {
+      parts.push(asn1.create(asn1.Class.CONTEXT_SPECIFIC, 2, true, [
+        asn1.create(asn1.Class.UNIVERSAL, asn1.Type.INTEGER, false,
+          asn1.integerToDer(params.saltLength).getBytes())
+      ]));
+    }
 
-      if(params.saltLength !== undefined) {
-        parts.push(asn1.create(asn1.Class.CONTEXT_SPECIFIC, 2, true, [
-          asn1.create(asn1.Class.UNIVERSAL, asn1.Type.INTEGER, false,
-            asn1.integerToDer(params.saltLength).getBytes())
-        ]));
-      }
+    return asn1.create(asn1.Class.UNIVERSAL, asn1.Type.SEQUENCE, true, parts);
 
-      return asn1.create(asn1.Class.UNIVERSAL, asn1.Type.SEQUENCE, true, parts);
-
-    default:
-      return asn1.create(asn1.Class.UNIVERSAL, asn1.Type.NULL, false, '');
+  default:
+    return asn1.create(asn1.Class.UNIVERSAL, asn1.Type.NULL, false, '');
   }
 }
 
@@ -13591,29 +13475,6 @@ function _CRIAttributesToAsn1(csr) {
   return rval;
 }
 
-var jan_1_1950 = new Date('1950-01-01T00:00:00Z');
-var jan_1_2050 = new Date('2050-01-01T00:00:00Z');
-
-/**
- * Converts a Date object to ASN.1
- * Handles the different format before and after 1st January 2050
- *
- * @param date date object.
- *
- * @return the ASN.1 object representing the date.
- */
-function _dateToAsn1(date) {
-  if(date >= jan_1_1950 && date < jan_1_2050) {
-    return asn1.create(
-      asn1.Class.UNIVERSAL, asn1.Type.UTCTIME, false,
-      asn1.dateToUtcTime(date));
-  } else {
-    return asn1.create(
-      asn1.Class.UNIVERSAL, asn1.Type.GENERALIZEDTIME, false,
-      asn1.dateToGeneralizedTime(date));
-  }
-}
-
 /**
  * Gets the ASN.1 TBSCertificate part of an X.509v3 certificate.
  *
@@ -13623,8 +13484,6 @@ function _dateToAsn1(date) {
  */
 pki.getTBSCertificate = function(cert) {
   // TBSCertificate
-  var notBefore = _dateToAsn1(cert.validity.notBefore);
-  var notAfter = _dateToAsn1(cert.validity.notAfter);
   var tbs = asn1.create(asn1.Class.UNIVERSAL, asn1.Type.SEQUENCE, true, [
     // version
     asn1.create(asn1.Class.CONTEXT_SPECIFIC, 0, true, [
@@ -13648,8 +13507,12 @@ pki.getTBSCertificate = function(cert) {
     _dnToAsn1(cert.issuer),
     // validity
     asn1.create(asn1.Class.UNIVERSAL, asn1.Type.SEQUENCE, true, [
-      notBefore,
-      notAfter
+      // notBefore
+      asn1.create(asn1.Class.UNIVERSAL, asn1.Type.UTCTIME, false,
+        asn1.dateToUtcTime(cert.validity.notBefore)),
+      // notAfter
+      asn1.create(asn1.Class.UNIVERSAL, asn1.Type.UTCTIME, false,
+        asn1.dateToUtcTime(cert.validity.notAfter))
     ]),
     // subject
     _dnToAsn1(cert.subject),
@@ -13896,7 +13759,7 @@ pki.createCaStore = function(certs) {
 
     ensureSubjectHasHash(cert.subject);
 
-    if(!caStore.hasCertificate(cert)) { // avoid duplicate certificates in store
+    if(!caStore.hasCertificate(cert)) {  // avoid duplicate certificates in store
       if(cert.subject.hash in caStore.certs) {
         // subject hash already exists, append to array
         var tmp = caStore.certs[cert.subject.hash];
@@ -14021,7 +13884,7 @@ pki.createCaStore = function(certs) {
     // produce subject hash if it doesn't exist
     if(!subject.hash) {
       var md = forge.md.sha1.create();
-      subject.attributes = pki.RDNAttributesAsArray(_dnToAsn1(subject), md);
+      subject.attributes =  pki.RDNAttributesAsArray(_dnToAsn1(subject), md);
       subject.hash = md.digest().toHex();
     }
   }
@@ -14057,13 +13920,7 @@ pki.certificateError = {
  * @param caStore a certificate store to verify against.
  * @param chain the certificate chain to verify, with the root or highest
  *          authority at the end (an array of certificates).
- * @param options a callback to be called for every certificate in the chain or
- *                  an object with:
- *                  verify a callback to be called for every certificate in the
- *                    chain
- *                  validityCheckDate the date against which the certificate
- *                    validity period should be checked. Pass null to not check
- *                    the validity period. By default, the current date is used.
+ * @param verify called for every certificate in the chain.
  *
  * The verify callback has the following signature:
  *
@@ -14079,7 +13936,7 @@ pki.certificateError = {
  *
  * @return true if successful, error thrown if not.
  */
-pki.verifyCertificateChain = function(caStore, chain, options) {
+pki.verifyCertificateChain = function(caStore, chain, verify) {
   /* From: RFC3280 - Internet X.509 Public Key Infrastructure Certificate
     Section 6: Certification Path Validation
     See inline parentheticals related to this particular implementation.
@@ -14209,26 +14066,13 @@ pki.verifyCertificateChain = function(caStore, chain, options) {
        CAs that may appear below a CA before only end-entity certificates
        may be issued. */
 
-  // if a verify callback is passed as the third parameter, package it within
-  // the options object. This is to support a legacy function signature that
-  // expected the verify callback as the third parameter.
-  if(typeof options === 'function') {
-    options = {verify: options};
-  }
-  options = options || {};
-
   // copy cert chain references to another array to protect against changes
   // in verify callback
   chain = chain.slice(0);
   var certs = chain.slice(0);
 
-  var validityCheckDate = options.validityCheckDate;
-  // if no validityCheckDate is specified, default to the current date. Make
-  // sure to maintain the value null because it indicates that the validity
-  // period should not be checked.
-  if(typeof validityCheckDate === 'undefined') {
-    validityCheckDate = new Date();
-  }
+  // get current date
+  var now = new Date();
 
   // verify each cert in the chain using its parent, where the parent
   // is either the next in the chain or from the CA store
@@ -14240,20 +14084,15 @@ pki.verifyCertificateChain = function(caStore, chain, options) {
     var parent = null;
     var selfSigned = false;
 
-    if(validityCheckDate) {
-      // 1. check valid time
-      if(validityCheckDate < cert.validity.notBefore ||
-         validityCheckDate > cert.validity.notAfter) {
-        error = {
-          message: 'Certificate is not valid yet or has expired.',
-          error: pki.certificateError.certificate_expired,
-          notBefore: cert.validity.notBefore,
-          notAfter: cert.validity.notAfter,
-          // TODO: we might want to reconsider renaming 'now' to
-          // 'validityCheckDate' should this API be changed in the future.
-          now: validityCheckDate
-        };
-      }
+    // 1. check valid time
+    if(now < cert.validity.notBefore || now > cert.validity.notAfter) {
+      error = {
+        message: 'Certificate is not valid yet or has expired.',
+        error: pki.certificateError.certificate_expired,
+        notBefore: cert.validity.notBefore,
+        notAfter: cert.validity.notAfter,
+        now: now
+      };
     }
 
     // 2. verify with parent from chain or CA store
@@ -14400,7 +14239,7 @@ pki.verifyCertificateChain = function(caStore, chain, options) {
 
     // call application callback
     var vfd = (error === null) ? true : error.error;
-    var ret = options.verify ? options.verify(vfd, depth, certs) : vfd;
+    var ret = verify ? verify(vfd, depth, certs) : vfd;
     if(ret === true) {
       // clear any set error
       error = null;
@@ -14418,7 +14257,7 @@ pki.verifyCertificateChain = function(caStore, chain, options) {
         // set custom message and error
         if(typeof ret === 'object' && !forge.util.isArray(ret)) {
           if(ret.message) {
-            error.message = ret.message;
+             error.message = ret.message;
           }
           if(ret.error) {
             error.error = ret.error;
@@ -14443,7 +14282,7 @@ pki.verifyCertificateChain = function(caStore, chain, options) {
 
 
 /***/ }),
-/* 18 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -14690,7 +14529,7 @@ pss.create = function(options) {
 
 
 /***/ }),
-/* 19 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -15347,7 +15186,7 @@ modes.gcm.prototype.encrypt = function(input, output, finish) {
       this._partialOutput.putInt32(input.getInt32() ^ this._outBlock[i]);
     }
 
-    if(partialBytes <= 0 || finish) {
+    if(partialBytes === 0 || finish) {
       // handle overflow prior to hashing
       if(finish) {
         // get block overflow
@@ -15683,7 +15522,7 @@ function from64To32(num) {
 
 
 /***/ }),
-/* 20 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -15923,7 +15762,7 @@ __webpack_require__(3);
 __webpack_require__(8);
 __webpack_require__(14);
 __webpack_require__(7);
-__webpack_require__(21);
+__webpack_require__(20);
 __webpack_require__(2);
 __webpack_require__(9);
 __webpack_require__(1);
@@ -19216,48 +19055,40 @@ var _alertDescToCertError = function(desc) {
  */
 tls.verifyCertificateChain = function(c, chain) {
   try {
-    // Make a copy of c.verifyOptions so that we can modify options.verify
-    // without modifying c.verifyOptions.
-    var options = {};
-    for (var key in c.verifyOptions) {
-      options[key] = c.verifyOptions[key];
-    }
-
-    options.verify = function(vfd, depth, chain) {
-      // convert pki.certificateError to tls alert description
-      var desc = _certErrorToAlertDesc(vfd);
-
-      // call application callback
-      var ret = c.verify(c, vfd, depth, chain);
-      if(ret !== true) {
-        if(typeof ret === 'object' && !forge.util.isArray(ret)) {
-          // throw custom error
-          var error = new Error('The application rejected the certificate.');
-          error.send = true;
-          error.alert = {
-            level: tls.Alert.Level.fatal,
-            description: tls.Alert.Description.bad_certificate
-          };
-          if(ret.message) {
-            error.message = ret.message;
-          }
-          if(ret.alert) {
-            error.alert.description = ret.alert;
-          }
-          throw error;
-        }
-
-        // convert tls alert description to pki.certificateError
-        if(ret !== vfd) {
-          ret = _alertDescToCertError(ret);
-        }
-      }
-
-      return ret;
-    };
-
     // verify chain
-    forge.pki.verifyCertificateChain(c.caStore, chain, options);
+    forge.pki.verifyCertificateChain(c.caStore, chain,
+      function verify(vfd, depth, chain) {
+        // convert pki.certificateError to tls alert description
+        var desc = _certErrorToAlertDesc(vfd);
+
+        // call application callback
+        var ret = c.verify(c, vfd, depth, chain);
+        if(ret !== true) {
+          if(typeof ret === 'object' && !forge.util.isArray(ret)) {
+            // throw custom error
+            var error = new Error('The application rejected the certificate.');
+            error.send = true;
+            error.alert = {
+              level: tls.Alert.Level.fatal,
+              description: tls.Alert.Description.bad_certificate
+            };
+            if(ret.message) {
+              error.message = ret.message;
+            }
+            if(ret.alert) {
+              error.alert.description = ret.alert;
+            }
+            throw error;
+          }
+
+          // convert tls alert description to pki.certificateError
+          if(ret !== vfd) {
+            ret = _alertDescToCertError(ret);
+          }
+        }
+
+        return ret;
+      });
   } catch(ex) {
     // build tls error if not already customized
     var err = ex;
@@ -19414,7 +19245,6 @@ tls.createConnection = function(options) {
     virtualHost: options.virtualHost || null,
     verifyClient: options.verifyClient || false,
     verify: options.verify || function(cn, vfd, dpth, cts) {return vfd;},
-    verifyOptions: options.verifyOptions || {},
     getCertificate: options.getCertificate || null,
     getPrivateKey: options.getPrivateKey || null,
     getSignature: options.getSignature || null,
@@ -19944,10 +19774,6 @@ forge.tls.createSessionCache = tls.createSessionCache;
  *   verifyClient: true to require a client certificate in server mode,
  *     'optional' to request one, false not to (default: false).
  *   verify: a handler used to custom verify certificates in the chain.
- *   verifyOptions: an object with options for the certificate chain validation.
- *     See documentation of pki.verifyCertificateChain for possible options.
- *     verifyOptions.verify is ignored. If you wish to specify a verify handler
- *     use the verify key.
  *   getCertificate: an optional callback used to get a certificate or
  *     a chain of certificates (as an array).
  *   getPrivateKey: an optional callback used to get a private key.
@@ -19971,7 +19797,7 @@ forge.tls.createConnection = tls.createConnection;
 
 
 /***/ }),
-/* 21 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -19985,14 +19811,14 @@ forge.tls.createConnection = tls.createConnection;
 var forge = __webpack_require__(0);
 __webpack_require__(3);
 __webpack_require__(6);
-__webpack_require__(22);
+__webpack_require__(21);
 __webpack_require__(7);
 __webpack_require__(15);
 __webpack_require__(28);
-__webpack_require__(18);
+__webpack_require__(17);
 __webpack_require__(11);
 __webpack_require__(1);
-__webpack_require__(17);
+__webpack_require__(16);
 
 // shortcut for asn.1 API
 var asn1 = forge.asn1;
@@ -20079,7 +19905,7 @@ pki.privateKeyInfoToPem = function(pki, maxline) {
 
 
 /***/ }),
-/* 22 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -21108,6 +20934,12 @@ function createPbkdf2Params(salt, countBytes, dkLen, prfAlgorithm) {
 
 
 /***/ }),
+/* 22 */
+/***/ (function(module, exports) {
+
+/* (ignored) */
+
+/***/ }),
 /* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -21461,7 +21293,7 @@ __webpack_require__(1);
 var _crypto = null;
 if(forge.util.isNodejs && !forge.options.usePureJavaScript &&
   !process.versions['node-webkit']) {
-  _crypto = __webpack_require__(16);
+  _crypto = __webpack_require__(22);
 }
 
 /* PRNG API */
@@ -21713,12 +21545,13 @@ prng.create = function(plugin) {
   function defaultSeedFile(needed) {
     // use window.crypto.getRandomValues strong source of entropy if available
     var getRandomValues = null;
-    var globalScope = forge.util.globalScope;
-    var _crypto = globalScope.crypto || globalScope.msCrypto;
-    if(_crypto && _crypto.getRandomValues) {
-      getRandomValues = function(arr) {
-        return _crypto.getRandomValues(arr);
-      };
+    if(typeof window !== 'undefined') {
+      var _crypto = window.crypto || window.msCrypto;
+      if(_crypto && _crypto.getRandomValues) {
+        getRandomValues = function(arr) {
+          return _crypto.getRandomValues(arr);
+        };
+      }
     }
 
     var b = forge.util.createBuffer();
@@ -22406,7 +22239,7 @@ pkcs1.encode_rsa_oaep = function(key, message, options) {
 
   var PS = '';
   var PS_length = maxLength - message.length;
-  for(var i = 0; i < PS_length; i++) {
+  for (var i = 0; i < PS_length; i++) {
     PS += '\x00';
   }
 
@@ -22940,7 +22773,7 @@ function getMillerRabinTests(bits) {
  * PKCS12Attribute ::= SEQUENCE {
  *   attrId ATTRIBUTE.&id ({PKCS12AttrSet}),
  *   attrValues SET OF ATTRIBUTE.&Type ({PKCS12AttrSet}{@attrId})
- * } -- This type is compatible with the X.500 type 'Attribute'
+ * } -- This type is compatible with the X.500 type ’Attribute’
  *
  * PKCS12AttrSet ATTRIBUTE ::= {
  *   friendlyName | -- from PKCS #9
@@ -22970,12 +22803,12 @@ __webpack_require__(3);
 __webpack_require__(8);
 __webpack_require__(6);
 __webpack_require__(29);
-__webpack_require__(22);
+__webpack_require__(21);
 __webpack_require__(2);
 __webpack_require__(11);
 __webpack_require__(9);
 __webpack_require__(1);
-__webpack_require__(17);
+__webpack_require__(16);
 
 // shortcut for asn.1 & PKI API
 var asn1 = forge.asn1;
@@ -24595,7 +24428,7 @@ sha512.create = function(algorithm) {
 
   // determine digest length by algorithm name (default)
   var digestLength = 64;
-  switch(algorithm) {
+  switch (algorithm) {
     case 'SHA-384':
       digestLength = 48;
       break;
@@ -25418,63 +25251,36 @@ module.exports = __webpack_require__(35);
  */
 module.exports = __webpack_require__(0);
 __webpack_require__(5);
-__webpack_require__(38);
+__webpack_require__(37);
 __webpack_require__(3);
 __webpack_require__(13);
 __webpack_require__(31);
 __webpack_require__(10);
-__webpack_require__(40);
+__webpack_require__(39);
 __webpack_require__(8);
-__webpack_require__(42);
+__webpack_require__(40);
 __webpack_require__(33);
-__webpack_require__(43);
+__webpack_require__(41);
 __webpack_require__(30);
 __webpack_require__(15);
 __webpack_require__(7);
 __webpack_require__(26);
 __webpack_require__(28);
-__webpack_require__(44);
-__webpack_require__(21);
+__webpack_require__(42);
+__webpack_require__(20);
 __webpack_require__(27);
 __webpack_require__(24);
-__webpack_require__(18);
+__webpack_require__(17);
 __webpack_require__(2);
 __webpack_require__(25);
-__webpack_require__(45);
-__webpack_require__(46);
-__webpack_require__(20);
+__webpack_require__(43);
+__webpack_require__(44);
+__webpack_require__(19);
 __webpack_require__(1);
 
 
 /***/ }),
 /* 36 */
-/***/ (function(module, exports) {
-
-var g;
-
-// This works in non-strict mode
-g = (function() {
-	return this;
-})();
-
-try {
-	// This works if eval is allowed (see CSP)
-	g = g || Function("return this")() || (1,eval)("this");
-} catch(e) {
-	// This works if the window reference is available
-	if(typeof window === "object")
-		g = window;
-}
-
-// g can still be undefined, but nothing to do about it...
-// We return undefined, instead of nothing here, so it's
-// easier to handle this case. if(!global) { ...}
-
-module.exports = g;
-
-
-/***/ }),
-/* 37 */
 /***/ (function(module, exports) {
 
 /**
@@ -25666,7 +25472,7 @@ function _encodeWithByteBuffer(input, alphabet) {
 
 
 /***/ }),
-/* 38 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -25679,7 +25485,7 @@ function _encodeWithByteBuffer(input, alphabet) {
  */
 var forge = __webpack_require__(0);
 __webpack_require__(5);
-__webpack_require__(20);
+__webpack_require__(19);
 
 var tls = module.exports = forge.tls;
 
@@ -25687,7 +25493,7 @@ var tls = module.exports = forge.tls;
  * Supported cipher suites.
  */
 tls.CipherSuites['TLS_RSA_WITH_AES_128_CBC_SHA'] = {
-  id: [0x00, 0x2f],
+  id: [0x00,0x2f],
   name: 'TLS_RSA_WITH_AES_128_CBC_SHA',
   initSecurityParameters: function(sp) {
     sp.bulk_cipher_algorithm = tls.BulkCipherAlgorithm.aes;
@@ -25703,7 +25509,7 @@ tls.CipherSuites['TLS_RSA_WITH_AES_128_CBC_SHA'] = {
   initConnectionState: initConnectionState
 };
 tls.CipherSuites['TLS_RSA_WITH_AES_256_CBC_SHA'] = {
-  id: [0x00, 0x35],
+  id: [0x00,0x35],
   name: 'TLS_RSA_WITH_AES_256_CBC_SHA',
   initSecurityParameters: function(sp) {
     sp.bulk_cipher_algorithm = tls.BulkCipherAlgorithm.aes;
@@ -25870,8 +25676,10 @@ function decrypt_aes_cbc_sha1_padding(blockSize, output, decrypt) {
  *
  * @return true on success, false on failure.
  */
+var count = 0;
 function decrypt_aes_cbc_sha1(record, s) {
   var rval = false;
+  ++count;
 
   var iv;
   if(record.version.minor === tls.Versions.TLS_1_0.minor) {
@@ -25954,7 +25762,7 @@ function compareMacs(key, mac1, mac2) {
 
 
 /***/ }),
-/* 39 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -25972,13 +25780,13 @@ forge.mgf.mgf1 = forge.mgf1;
 
 
 /***/ }),
-/* 40 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
  * JavaScript implementation of Ed25519.
  *
- * Copyright (c) 2017-2019 Digital Bazaar, Inc.
+ * Copyright (c) 2017-2018 Digital Bazaar, Inc.
  *
  * This implementation is based on the most excellent TweetNaCl which is
  * in the public domain. Many thanks to its contributors:
@@ -25990,9 +25798,6 @@ __webpack_require__(12);
 __webpack_require__(2);
 __webpack_require__(32);
 __webpack_require__(1);
-var asn1Validator = __webpack_require__(41);
-var publicKeyValidator = asn1Validator.publicKeyValidator;
-var privateKeyValidator = asn1Validator.privateKeyValidator;
 
 if(typeof BigInteger === 'undefined') {
   var BigInteger = forge.jsbn.BigInteger;
@@ -26044,75 +25849,6 @@ ed25519.generateKeyPair = function(options) {
   return {publicKey: pk, privateKey: sk};
 };
 
-/**
- * Converts a private key from a RFC8410 ASN.1 encoding.
- *
- * @param obj - The asn1 representation of a private key.
- *
- * @returns {Object} keyInfo - The key information.
- * @returns {Buffer|Uint8Array} keyInfo.privateKeyBytes - 32 private key bytes.
- */
-ed25519.privateKeyFromAsn1 = function(obj) {
-  var capture = {};
-  var errors = [];
-  var valid = forge.asn1.validate(obj, privateKeyValidator, capture, errors);
-  if(!valid) {
-    var error = new Error('Invalid Key.');
-    error.errors = errors;
-    throw error;
-  }
-  var oid = forge.asn1.derToOid(capture.privateKeyOid);
-  var ed25519Oid = forge.oids.EdDSA25519;
-  if(oid !== ed25519Oid) {
-    throw new Error('Invalid OID "' + oid + '"; OID must be "' +
-      ed25519Oid + '".');
-  }
-  var privateKey = capture.privateKey;
-  // manually extract the private key bytes from nested octet string, see FIXME:
-  // https://github.com/digitalbazaar/forge/blob/master/lib/asn1.js#L542
-  var privateKeyBytes = messageToNativeBuffer({
-    message: forge.asn1.fromDer(privateKey).value,
-    encoding: 'binary'
-  });
-  // TODO: RFC8410 specifies a format for encoding the public key bytes along
-  // with the private key bytes. `publicKeyBytes` can be returned in the
-  // future. https://tools.ietf.org/html/rfc8410#section-10.3
-  return {privateKeyBytes: privateKeyBytes};
-};
-
-/**
- * Converts a public key from a RFC8410 ASN.1 encoding.
- *
- * @param obj - The asn1 representation of a public key.
- *
- * @return {Buffer|Uint8Array} - 32 public key bytes.
- */
-ed25519.publicKeyFromAsn1 = function(obj) {
-  // get SubjectPublicKeyInfo
-  var capture = {};
-  var errors = [];
-  var valid = forge.asn1.validate(obj, publicKeyValidator, capture, errors);
-  if(!valid) {
-    var error = new Error('Invalid Key.');
-    error.errors = errors;
-    throw error;
-  }
-  var oid = forge.asn1.derToOid(capture.publicKeyOid);
-  var ed25519Oid = forge.oids.EdDSA25519;
-  if(oid !== ed25519Oid) {
-    throw new Error('Invalid OID "' + oid + '"; OID must be "' +
-      ed25519Oid + '".');
-  }
-  var publicKeyBytes = capture.ed25519PublicKey;
-  if(publicKeyBytes.length !== ed25519.constants.PUBLIC_KEY_BYTE_LENGTH) {
-    throw new Error('Key length is invalid.');
-  }
-  return messageToNativeBuffer({
-    message: publicKeyBytes,
-    encoding: 'binary'
-  });
-};
-
 ed25519.publicKeyFromPrivateKey = function(options) {
   options = options || {};
   var privateKey = messageToNativeBuffer({
@@ -26138,13 +25874,9 @@ ed25519.sign = function(options) {
     message: options.privateKey,
     encoding: 'binary'
   });
-  if(privateKey.length === ed25519.constants.SEED_BYTE_LENGTH) {
-    var keyPair = ed25519.generateKeyPair({seed: privateKey});
-    privateKey = keyPair.privateKey;
-  } else if(privateKey.length !== ed25519.constants.PRIVATE_KEY_BYTE_LENGTH) {
+  if(privateKey.length !== ed25519.constants.PRIVATE_KEY_BYTE_LENGTH) {
     throw new TypeError(
       '"options.privateKey" must have a byte length of ' +
-      ed25519.constants.SEED_BYTE_LENGTH + ' or ' +
       ed25519.constants.PRIVATE_KEY_BYTE_LENGTH);
   }
 
@@ -26200,7 +25932,7 @@ ed25519.verify = function(options) {
 
 function messageToNativeBuffer(options) {
   var message = options.message;
-  if(message instanceof Uint8Array || message instanceof NativeBuffer) {
+  if(message instanceof Uint8Array) {
     return message;
   }
 
@@ -26221,7 +25953,7 @@ function messageToNativeBuffer(options) {
 
   if(typeof message === 'string') {
     if(typeof Buffer !== 'undefined') {
-      return Buffer.from(message, encoding);
+      return new Buffer(message, encoding);
     }
     message = new ByteBuffer(message, encoding);
   } else if(!(message instanceof ByteBuffer)) {
@@ -26270,7 +26002,7 @@ function sha512(msg, msgLen) {
   md.update(buffer.getBytes(msgLen), 'binary');
   var hash = md.digest().getBytes();
   if(typeof Buffer !== 'undefined') {
-    return Buffer.from(hash, 'binary');
+    return new Buffer(hash, 'binary');
   }
   var out = new NativeBuffer(ed25519.constants.HASH_BYTE_LENGTH);
   for(var i = 0; i < 64; ++i) {
@@ -27050,104 +26782,7 @@ function M(o, a, b) {
 
 
 /***/ }),
-/* 41 */
-/***/ (function(module, exports, __webpack_require__) {
-
-/**
- * Copyright (c) 2019 Digital Bazaar, Inc.
- */
-
-var forge = __webpack_require__(0);
-__webpack_require__(3);
-var asn1 = forge.asn1;
-
-exports.privateKeyValidator = {
-  // PrivateKeyInfo
-  name: 'PrivateKeyInfo',
-  tagClass: asn1.Class.UNIVERSAL,
-  type: asn1.Type.SEQUENCE,
-  constructed: true,
-  value: [{
-    // Version (INTEGER)
-    name: 'PrivateKeyInfo.version',
-    tagClass: asn1.Class.UNIVERSAL,
-    type: asn1.Type.INTEGER,
-    constructed: false,
-    capture: 'privateKeyVersion'
-  }, {
-    // privateKeyAlgorithm
-    name: 'PrivateKeyInfo.privateKeyAlgorithm',
-    tagClass: asn1.Class.UNIVERSAL,
-    type: asn1.Type.SEQUENCE,
-    constructed: true,
-    value: [{
-      name: 'AlgorithmIdentifier.algorithm',
-      tagClass: asn1.Class.UNIVERSAL,
-      type: asn1.Type.OID,
-      constructed: false,
-      capture: 'privateKeyOid'
-    }]
-  }, {
-    // PrivateKey
-    name: 'PrivateKeyInfo',
-    tagClass: asn1.Class.UNIVERSAL,
-    type: asn1.Type.OCTETSTRING,
-    constructed: false,
-    capture: 'privateKey'
-  }]
-};
-
-exports.publicKeyValidator = {
-  name: 'SubjectPublicKeyInfo',
-  tagClass: asn1.Class.UNIVERSAL,
-  type: asn1.Type.SEQUENCE,
-  constructed: true,
-  captureAsn1: 'subjectPublicKeyInfo',
-  value: [{
-    name: 'SubjectPublicKeyInfo.AlgorithmIdentifier',
-    tagClass: asn1.Class.UNIVERSAL,
-    type: asn1.Type.SEQUENCE,
-    constructed: true,
-    value: [{
-      name: 'AlgorithmIdentifier.algorithm',
-      tagClass: asn1.Class.UNIVERSAL,
-      type: asn1.Type.OID,
-      constructed: false,
-      capture: 'publicKeyOid'
-    }]
-  },
-  // capture group for ed25519PublicKey
-  {
-    tagClass: asn1.Class.UNIVERSAL,
-    type: asn1.Type.BITSTRING,
-    constructed: false,
-    composed: true,
-    captureBitStringValue: 'ed25519PublicKey'
-  }
-  // FIXME: this is capture group for rsaPublicKey, use it in this API or
-  // discard?
-  /* {
-    // subjectPublicKey
-    name: 'SubjectPublicKeyInfo.subjectPublicKey',
-    tagClass: asn1.Class.UNIVERSAL,
-    type: asn1.Type.BITSTRING,
-    constructed: false,
-    value: [{
-      // RSAPublicKey
-      name: 'SubjectPublicKeyInfo.subjectPublicKey.RSAPublicKey',
-      tagClass: asn1.Class.UNIVERSAL,
-      type: asn1.Type.SEQUENCE,
-      constructed: true,
-      optional: true,
-      captureAsn1: 'rsaPublicKey'
-    }]
-  } */
-  ]
-};
-
-
-/***/ }),
-/* 42 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -27205,14 +26840,14 @@ forge.kem.rsa.create = function(kdf, options) {
    *   key: the secret key to use for encrypting a message.
    */
   kem.encrypt = function(publicKey, keyLength) {
-    // generate a random r where 1 < r < n
+    // generate a random r where 1 > r > n
     var byteLength = Math.ceil(publicKey.n.bitLength() / 8);
     var r;
     do {
       r = new BigInteger(
         forge.util.bytesToHex(prng.getBytesSync(byteLength)),
         16).mod(publicKey.n);
-    } while(r.compareTo(BigInteger.ONE) <= 0);
+    } while(r.equals(BigInteger.ZERO));
 
     // prepend r with zeros
     r = forge.util.hexToBytes(r.toString(16));
@@ -27321,7 +26956,7 @@ function _createKDF(kdf, md, counterStart, digestLength) {
 
 
 /***/ }),
-/* 43 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -27340,7 +26975,7 @@ __webpack_require__(32);
 
 
 /***/ }),
-/* 44 */
+/* 42 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -27370,7 +27005,7 @@ __webpack_require__(7);
 __webpack_require__(29);
 __webpack_require__(2);
 __webpack_require__(1);
-__webpack_require__(17);
+__webpack_require__(16);
 
 // shortcut for ASN.1 API
 var asn1 = forge.asn1;
@@ -28603,7 +28238,7 @@ function _decryptContent(msg) {
 
 
 /***/ }),
-/* 45 */
+/* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -28845,7 +28480,7 @@ function _sha1() {
 
 
 /***/ }),
-/* 46 */
+/* 44 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
