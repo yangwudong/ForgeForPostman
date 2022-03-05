@@ -87,7 +87,7 @@ module.exports = {
 /* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(global) {/**
+/**
  * Utility functions for web applications.
  *
  * @author Dave Longley
@@ -95,7 +95,7 @@ module.exports = {
  * Copyright (c) 2010-2018 Digital Bazaar, Inc.
  */
 var forge = __webpack_require__(0);
-var baseN = __webpack_require__(37);
+var baseN = __webpack_require__(36);
 
 /* Utilities API */
 var util = module.exports = forge.util = forge.util || {};
@@ -198,19 +198,6 @@ var util = module.exports = forge.util = forge.util || {};
 // check if running under Node.js
 util.isNodejs =
   typeof process !== 'undefined' && process.versions && process.versions.node;
-
-
-// 'self' will also work in Web Workers (instance of WorkerGlobalScope) while
-// it will point to `window` in the main thread.
-// To remain compatible with older browsers, we fall back to 'window' if 'self'
-// is not available.
-util.globalScope = (function() {
-  if(util.isNodejs) {
-    return global;
-  }
-
-  return typeof self === 'undefined' ? window : self;
-})();
 
 // define isArray
 util.isArray = Array.isArray || function(x) {
@@ -3081,7 +3068,6 @@ util.estimateCores = function(options, callback) {
   }
 };
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(36)))
 
 /***/ }),
 /* 2 */
@@ -3204,14 +3190,14 @@ var _ctx = spawnPrng();
 // add other sources of entropy only if window.crypto.getRandomValues is not
 // available -- otherwise this source will be automatically used by the prng
 var getRandomValues = null;
-var globalScope = forge.util.globalScope;
-var _crypto = globalScope.crypto || globalScope.msCrypto;
-if(_crypto && _crypto.getRandomValues) {
-  getRandomValues = function(arr) {
-    return _crypto.getRandomValues(arr);
-  };
+if(typeof window !== 'undefined') {
+  var _crypto = window.crypto || window.msCrypto;
+  if(_crypto && _crypto.getRandomValues) {
+    getRandomValues = function(arr) {
+      return _crypto.getRandomValues(arr);
+    };
+  }
 }
-
 if(forge.options.usePureJavaScript ||
   (!forge.util.isNodejs && !getRandomValues)) {
   // if this is a web worker, do not use weak entropy, instead register to
@@ -4734,7 +4720,7 @@ forge.md.algorithms = forge.md.algorithms || {};
  */
 var forge = __webpack_require__(0);
 __webpack_require__(13);
-__webpack_require__(19);
+__webpack_require__(18);
 __webpack_require__(1);
 
 /* AES API */
@@ -5922,11 +5908,9 @@ _IN('2.5.4.7', 'localityName');
 _IN('2.5.4.8', 'stateOrProvinceName');
 _IN('2.5.4.10', 'organizationName');
 _IN('2.5.4.11', 'organizationalUnitName');
-_IN('2.5.4.13', 'description');
 
 // X.509 extension OIDs
 _IN('2.16.840.1.113730.1.1', 'nsCertType');
-_IN('2.16.840.1.113730.1.13', 'nsComment'); // deprecated in theory; still widely used
 _I_('2.5.29.1', 'authorityKeyIdentifier'); // deprecated, use .35
 _I_('2.5.29.2', 'keyAttributes'); // obsolete use .37 or .15
 _I_('2.5.29.3', 'certificatePolicies'); // deprecated, use .32
@@ -6726,7 +6710,7 @@ function _update(s, w, bytes) {
  */
 var forge = __webpack_require__(0);
 __webpack_require__(13);
-__webpack_require__(19);
+__webpack_require__(18);
 __webpack_require__(1);
 
 /* DES API */
@@ -7271,13 +7255,8 @@ if(typeof BigInteger === 'undefined') {
   var BigInteger = forge.jsbn.BigInteger;
 }
 
-var _crypto = forge.util.isNodejs ? __webpack_require__(16) : null;
-
 // shortcut for asn.1 API
 var asn1 = forge.asn1;
-
-// shortcut for util API
-var util = forge.util;
 
 /*
  * RSA encryption and decryption, see RFC 2313.
@@ -7285,7 +7264,6 @@ var util = forge.util;
 forge.pki = forge.pki || {};
 module.exports = forge.pki.rsa = forge.rsa = forge.rsa || {};
 var pki = forge.pki;
-
 
 // for finding primes, which are 30k+i for i = 1, 7, 11, 13, 17, 19, 23, 29
 var GCD_30_DELTA = [6, 4, 2, 4, 2, 4, 6, 2];
@@ -8023,7 +8001,7 @@ pki.rsa.stepKeyPairGenerationState = function(state, n) {
  * @param [bits] the size for the private key in bits, defaults to 2048.
  * @param [e] the public exponent to use, defaults to 65537.
  * @param [options] options for key-pair generation, if given then 'bits'
- *            and 'e' must *not* be given:
+ *          and 'e' must *not* be given:
  *          bits the size for the private key in bits, (default: 2048).
  *          e the public exponent to use, (default: 65537 (0x10001)).
  *          workerScript the worker script URL.
@@ -8033,7 +8011,7 @@ pki.rsa.stepKeyPairGenerationState = function(state, n) {
  *            numbers for each web worker to check per work assignment,
  *            (default: 100).
  *          prng a custom crypto-secure pseudo-random number generator to use,
- *            that must define "getBytesSync". Disables use of native APIs.
+ *            that must define "getBytesSync".
  *          algorithm the algorithm to use (default: 'PRIMEINC').
  * @param [callback(err, keypair)] called once the operation completes.
  *
@@ -8086,108 +8064,63 @@ pki.rsa.generateKeyPair = function(bits, e, options, callback) {
     e = options.e || 0x10001;
   }
 
-  // use native code if permitted, available, and parameters are acceptable
-  if(!forge.options.usePureJavaScript && !options.prng &&
+  // if native code is permitted and a callback is given, use native
+  // key generation code if available and if parameters are acceptable
+  if(!forge.options.usePureJavaScript && callback &&
     bits >= 256 && bits <= 16384 && (e === 0x10001 || e === 3)) {
-    if(callback) {
-      // try native async
-      if(_detectNodeCrypto('generateKeyPair')) {
-        return _crypto.generateKeyPair('rsa', {
-          modulusLength: bits,
-          publicExponent: e,
-          publicKeyEncoding: {
-            type: 'spki',
-            format: 'pem'
-          },
-          privateKeyEncoding: {
-            type: 'pkcs8',
-            format: 'pem'
-          }
-        }, function(err, pub, priv) {
-          if (err) {
-            return callback(err);
-          }
+    if(_detectSubtleCrypto('generateKey') && _detectSubtleCrypto('exportKey')) {
+      // use standard native generateKey
+      return window.crypto.subtle.generateKey({
+        name: 'RSASSA-PKCS1-v1_5',
+        modulusLength: bits,
+        publicExponent: _intToUint8Array(e),
+        hash: {name: 'SHA-256'}
+      }, true /* key can be exported*/, ['sign', 'verify'])
+      .then(function(pair) {
+        return window.crypto.subtle.exportKey('pkcs8', pair.privateKey);
+      // avoiding catch(function(err) {...}) to support IE <= 8
+      }).then(undefined, function(err) {
+        callback(err);
+      }).then(function(pkcs8) {
+        if(pkcs8) {
+          var privateKey = pki.privateKeyFromAsn1(
+            asn1.fromDer(forge.util.createBuffer(pkcs8)));
           callback(null, {
-            privateKey: pki.privateKeyFromPem(priv),
-            publicKey: pki.publicKeyFromPem(pub)
+            privateKey: privateKey,
+            publicKey: pki.setRsaPublicKey(privateKey.n, privateKey.e)
           });
-        });
-      }
-      if(_detectSubtleCrypto('generateKey') && _detectSubtleCrypto('exportKey')) {
-        // use standard native generateKey
-        return util.globalScope.crypto.subtle.generateKey({
-          name: 'RSASSA-PKCS1-v1_5',
-          modulusLength: bits,
-          publicExponent: _intToUint8Array(e),
-          hash: {name: 'SHA-256'}
-        }, true /* key can be exported*/, ['sign', 'verify'])
-        .then(function(pair) {
-          return util.globalScope.crypto.subtle.exportKey(
-            'pkcs8', pair.privateKey);
-        // avoiding catch(function(err) {...}) to support IE <= 8
-        }).then(undefined, function(err) {
-          callback(err);
-        }).then(function(pkcs8) {
-          if(pkcs8) {
-            var privateKey = pki.privateKeyFromAsn1(
-              asn1.fromDer(forge.util.createBuffer(pkcs8)));
-            callback(null, {
-              privateKey: privateKey,
-              publicKey: pki.setRsaPublicKey(privateKey.n, privateKey.e)
-            });
-          }
-        });
-      }
-      if(_detectSubtleMsCrypto('generateKey') &&
-        _detectSubtleMsCrypto('exportKey')) {
-        var genOp = util.globalScope.msCrypto.subtle.generateKey({
-          name: 'RSASSA-PKCS1-v1_5',
-          modulusLength: bits,
-          publicExponent: _intToUint8Array(e),
-          hash: {name: 'SHA-256'}
-        }, true /* key can be exported*/, ['sign', 'verify']);
-        genOp.oncomplete = function(e) {
-          var pair = e.target.result;
-          var exportOp = util.globalScope.msCrypto.subtle.exportKey(
-            'pkcs8', pair.privateKey);
-          exportOp.oncomplete = function(e) {
-            var pkcs8 = e.target.result;
-            var privateKey = pki.privateKeyFromAsn1(
-              asn1.fromDer(forge.util.createBuffer(pkcs8)));
-            callback(null, {
-              privateKey: privateKey,
-              publicKey: pki.setRsaPublicKey(privateKey.n, privateKey.e)
-            });
-          };
-          exportOp.onerror = function(err) {
-            callback(err);
-          };
+        }
+      });
+    }
+    if(_detectSubtleMsCrypto('generateKey') &&
+      _detectSubtleMsCrypto('exportKey')) {
+      var genOp = window.msCrypto.subtle.generateKey({
+        name: 'RSASSA-PKCS1-v1_5',
+        modulusLength: bits,
+        publicExponent: _intToUint8Array(e),
+        hash: {name: 'SHA-256'}
+      }, true /* key can be exported*/, ['sign', 'verify']);
+      genOp.oncomplete = function(e) {
+        var pair = e.target.result;
+        var exportOp = window.msCrypto.subtle.exportKey(
+          'pkcs8', pair.privateKey);
+        exportOp.oncomplete = function(e) {
+          var pkcs8 = e.target.result;
+          var privateKey = pki.privateKeyFromAsn1(
+            asn1.fromDer(forge.util.createBuffer(pkcs8)));
+          callback(null, {
+            privateKey: privateKey,
+            publicKey: pki.setRsaPublicKey(privateKey.n, privateKey.e)
+          });
         };
-        genOp.onerror = function(err) {
+        exportOp.onerror = function(err) {
           callback(err);
         };
-        return;
-      }
-    } else {
-      // try native sync
-      if(_detectNodeCrypto('generateKeyPairSync')) {
-        var keypair = _crypto.generateKeyPairSync('rsa', {
-          modulusLength: bits,
-          publicExponent: e,
-          publicKeyEncoding: {
-            type: 'spki',
-            format: 'pem'
-          },
-          privateKeyEncoding: {
-            type: 'pkcs8',
-            format: 'pem'
-          }
-        });
-        return {
-          privateKey: pki.privateKeyFromPem(keypair.privateKey),
-          publicKey: pki.publicKeyFromPem(keypair.publicKey)
-        };
-      }
+      };
+      genOp.onerror = function(err) {
+        callback(err);
+      };
+      return;
     }
   }
 
@@ -8976,17 +8909,6 @@ function _getMillerRabinTests(bits) {
 }
 
 /**
- * Performs feature detection on the Node crypto interface.
- *
- * @param fn the feature (function) to detect.
- *
- * @return true if detected, false if not.
- */
-function _detectNodeCrypto(fn) {
-  return forge.util.isNodejs && typeof _crypto[fn] === 'function';
-}
-
-/**
  * Performs feature detection on the SubtleCrypto interface.
  *
  * @param fn the feature (function) to detect.
@@ -8994,10 +8916,10 @@ function _detectNodeCrypto(fn) {
  * @return true if detected, false if not.
  */
 function _detectSubtleCrypto(fn) {
-  return (typeof util.globalScope !== 'undefined' &&
-    typeof util.globalScope.crypto === 'object' &&
-    typeof util.globalScope.crypto.subtle === 'object' &&
-    typeof util.globalScope.crypto.subtle[fn] === 'function');
+  return (typeof window !== 'undefined' &&
+    typeof window.crypto === 'object' &&
+    typeof window.crypto.subtle === 'object' &&
+    typeof window.crypto.subtle[fn] === 'function');
 }
 
 /**
@@ -9010,10 +8932,10 @@ function _detectSubtleCrypto(fn) {
  * @return true if detected, false if not.
  */
 function _detectSubtleMsCrypto(fn) {
-  return (typeof util.globalScope !== 'undefined' &&
-    typeof util.globalScope.msCrypto === 'object' &&
-    typeof util.globalScope.msCrypto.subtle === 'object' &&
-    typeof util.globalScope.msCrypto.subtle[fn] === 'function');
+  return (typeof window !== 'undefined' &&
+    typeof window.msCrypto === 'object' &&
+    typeof window.msCrypto.subtle === 'object' &&
+    typeof window.msCrypto.subtle[fn] === 'function');
 }
 
 function _intToUint8Array(x) {
@@ -10878,7 +10800,7 @@ var pkcs5 = forge.pkcs5 = forge.pkcs5 || {};
 
 var crypto;
 if(forge.util.isNodejs && !forge.options.usePureJavaScript) {
-  crypto = __webpack_require__(16);
+  crypto = __webpack_require__(22);
 }
 
 /**
@@ -11075,12 +10997,6 @@ module.exports = forge.pbkdf2 = pkcs5.pbkdf2 = function(
 
 /***/ }),
 /* 16 */
-/***/ (function(module, exports) {
-
-/* (ignored) */
-
-/***/ }),
-/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -11197,10 +11113,10 @@ __webpack_require__(5);
 __webpack_require__(3);
 __webpack_require__(10);
 __webpack_require__(4);
-__webpack_require__(39);
+__webpack_require__(38);
 __webpack_require__(6);
 __webpack_require__(7);
-__webpack_require__(18);
+__webpack_require__(17);
 __webpack_require__(11);
 __webpack_require__(1);
 
@@ -13357,15 +13273,6 @@ function _fillMissingExtensionFields(e, options) {
         asn1.Class.CONTEXT_SPECIFIC, altName.type, false,
         value));
     }
-  } else if(e.name === 'nsComment' && options.cert) {
-    // sanity check value is ASCII (req'd) and not too big
-    if(!(/^[\x00-\x7F]*$/.test(e.comment)) ||
-      (e.comment.length < 1) || (e.comment.length > 128)) {
-      throw new Error('Invalid "nsComment" content.');
-    }
-    // IA5STRING opaque comment
-    e.value = asn1.create(
-      asn1.Class.UNIVERSAL, asn1.Type.IA5STRING, false, e.comment);
   } else if(e.name === 'subjectKeyIdentifier' && options.cert) {
     var ski = options.cert.generateSubjectKeyIdentifier();
     e.subjectKeyIdentifier = ski.toHex();
@@ -13559,29 +13466,6 @@ function _CRIAttributesToAsn1(csr) {
   return rval;
 }
 
-const jan_1_1950 = new Date('1950-01-01T00:00:00Z');
-const jan_1_2050 = new Date('2050-01-01T00:00:00Z');
-
-/**
- * Converts a Date object to ASN.1
- * Handles the different format before and after 1st January 2050
- *
- * @param date date object.
- *
- * @return the ASN.1 object representing the date.
- */
- function _dateToAsn1(date){
-  if(date >= jan_1_1950 && date < jan_1_2050) {
-    return asn1.create(
-      asn1.Class.UNIVERSAL, asn1.Type.UTCTIME, false,
-      asn1.dateToUtcTime(date));
-  } else {
-    return asn1.create(
-      asn1.Class.UNIVERSAL, asn1.Type.GENERALIZEDTIME, false,
-      asn1.dateToGeneralizedTime(date));
-  }
-}
-
 /**
  * Gets the ASN.1 TBSCertificate part of an X.509v3 certificate.
  *
@@ -13591,8 +13475,6 @@ const jan_1_2050 = new Date('2050-01-01T00:00:00Z');
  */
 pki.getTBSCertificate = function(cert) {
   // TBSCertificate
-  var notBefore = _dateToAsn1(cert.validity.notBefore);
-  var notAfter = _dateToAsn1(cert.validity.notAfter);
   var tbs = asn1.create(asn1.Class.UNIVERSAL, asn1.Type.SEQUENCE, true, [
     // version
     asn1.create(asn1.Class.CONTEXT_SPECIFIC, 0, true, [
@@ -13616,8 +13498,12 @@ pki.getTBSCertificate = function(cert) {
     _dnToAsn1(cert.issuer),
     // validity
     asn1.create(asn1.Class.UNIVERSAL, asn1.Type.SEQUENCE, true, [
-      notBefore,
-      notAfter
+      // notBefore
+      asn1.create(asn1.Class.UNIVERSAL, asn1.Type.UTCTIME, false,
+        asn1.dateToUtcTime(cert.validity.notBefore)),
+      // notAfter
+      asn1.create(asn1.Class.UNIVERSAL, asn1.Type.UTCTIME, false,
+        asn1.dateToUtcTime(cert.validity.notAfter))
     ]),
     // subject
     _dnToAsn1(cert.subject),
@@ -14025,13 +13911,7 @@ pki.certificateError = {
  * @param caStore a certificate store to verify against.
  * @param chain the certificate chain to verify, with the root or highest
  *          authority at the end (an array of certificates).
- * @param options a callback to be called for every certificate in the chain or 
- *                  an object with:
- *                  verify a callback to be called for every certificate in the
- *                    chain
- *                  validityCheckDate the date against which the certificate 
- *                    validity period should be checked. Pass null to not check 
- *                    the validity period. By default, the current date is used. 
+ * @param verify called for every certificate in the chain.
  *
  * The verify callback has the following signature:
  *
@@ -14047,7 +13927,7 @@ pki.certificateError = {
  *
  * @return true if successful, error thrown if not.
  */
-pki.verifyCertificateChain = function(caStore, chain, options) {
+pki.verifyCertificateChain = function(caStore, chain, verify) {
   /* From: RFC3280 - Internet X.509 Public Key Infrastructure Certificate
     Section 6: Certification Path Validation
     See inline parentheticals related to this particular implementation.
@@ -14177,27 +14057,14 @@ pki.verifyCertificateChain = function(caStore, chain, options) {
        CAs that may appear below a CA before only end-entity certificates
        may be issued. */
 
-  // if a verify callback is passed as the third parameter, package it within 
-  // the options object. This is to support a legacy function signature that 
-  // expected the verify callback as the third parameter.
-  if(typeof options === 'function') {
-    options = {verify: options};
-  }
-  options = options || {};
-
   // copy cert chain references to another array to protect against changes
   // in verify callback
   chain = chain.slice(0);
   var certs = chain.slice(0);
 
-  var validityCheckDate = options.validityCheckDate;
-  // if no validityCheckDate is specified, default to the current date. Make 
-  // sure to maintain the value null because it indicates that the validity 
-  // period should not be checked.
-  if(typeof validityCheckDate === 'undefined') {
-    validityCheckDate = new Date();  
-  }
-  
+  // get current date
+  var now = new Date();
+
   // verify each cert in the chain using its parent, where the parent
   // is either the next in the chain or from the CA store
   var first = true;
@@ -14208,20 +14075,15 @@ pki.verifyCertificateChain = function(caStore, chain, options) {
     var parent = null;
     var selfSigned = false;
 
-    if(validityCheckDate) {
-      // 1. check valid time
-      if(validityCheckDate < cert.validity.notBefore || 
-         validityCheckDate > cert.validity.notAfter) {
-        error = {
-          message: 'Certificate is not valid yet or has expired.',
-          error: pki.certificateError.certificate_expired,
-          notBefore: cert.validity.notBefore,
-          notAfter: cert.validity.notAfter,
-          // TODO: we might want to reconsider renaming 'now' to 
-          // 'validityCheckDate' should this API be changed in the future.
-          now: validityCheckDate
-        };
-      }
+    // 1. check valid time
+    if(now < cert.validity.notBefore || now > cert.validity.notAfter) {
+      error = {
+        message: 'Certificate is not valid yet or has expired.',
+        error: pki.certificateError.certificate_expired,
+        notBefore: cert.validity.notBefore,
+        notAfter: cert.validity.notAfter,
+        now: now
+      };
     }
 
     // 2. verify with parent from chain or CA store
@@ -14368,7 +14230,7 @@ pki.verifyCertificateChain = function(caStore, chain, options) {
 
     // call application callback
     var vfd = (error === null) ? true : error.error;
-    var ret = options.verify ? options.verify(vfd, depth, certs) : vfd;
+    var ret = verify ? verify(vfd, depth, certs) : vfd;
     if(ret === true) {
       // clear any set error
       error = null;
@@ -14411,7 +14273,7 @@ pki.verifyCertificateChain = function(caStore, chain, options) {
 
 
 /***/ }),
-/* 18 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -14658,7 +14520,7 @@ pss.create = function(options) {
 
 
 /***/ }),
-/* 19 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -15651,7 +15513,7 @@ function from64To32(num) {
 
 
 /***/ }),
-/* 20 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -15891,7 +15753,7 @@ __webpack_require__(3);
 __webpack_require__(8);
 __webpack_require__(14);
 __webpack_require__(7);
-__webpack_require__(21);
+__webpack_require__(20);
 __webpack_require__(2);
 __webpack_require__(9);
 __webpack_require__(1);
@@ -19184,48 +19046,40 @@ var _alertDescToCertError = function(desc) {
  */
 tls.verifyCertificateChain = function(c, chain) {
   try {
-    // Make a copy of c.verifyOptions so that we can modify options.verify 
-    // without modifying c.verifyOptions.
-    var options = {};
-    for (var key in c.verifyOptions) {
-      options[key] = c.verifyOptions[key];
-    }
-
-    options.verify = function(vfd, depth, chain) {
-      // convert pki.certificateError to tls alert description
-      var desc = _certErrorToAlertDesc(vfd);
-
-      // call application callback
-      var ret = c.verify(c, vfd, depth, chain);
-      if(ret !== true) {
-        if(typeof ret === 'object' && !forge.util.isArray(ret)) {
-          // throw custom error
-          var error = new Error('The application rejected the certificate.');
-          error.send = true;
-          error.alert = {
-            level: tls.Alert.Level.fatal,
-            description: tls.Alert.Description.bad_certificate
-          };
-          if(ret.message) {
-            error.message = ret.message;
-          }
-          if(ret.alert) {
-            error.alert.description = ret.alert;
-          }
-          throw error;
-        }
-
-        // convert tls alert description to pki.certificateError
-        if(ret !== vfd) {
-          ret = _alertDescToCertError(ret);
-        }
-      }
-
-      return ret;
-    };
-
     // verify chain
-    forge.pki.verifyCertificateChain(c.caStore, chain, options);
+    forge.pki.verifyCertificateChain(c.caStore, chain,
+      function verify(vfd, depth, chain) {
+        // convert pki.certificateError to tls alert description
+        var desc = _certErrorToAlertDesc(vfd);
+
+        // call application callback
+        var ret = c.verify(c, vfd, depth, chain);
+        if(ret !== true) {
+          if(typeof ret === 'object' && !forge.util.isArray(ret)) {
+            // throw custom error
+            var error = new Error('The application rejected the certificate.');
+            error.send = true;
+            error.alert = {
+              level: tls.Alert.Level.fatal,
+              description: tls.Alert.Description.bad_certificate
+            };
+            if(ret.message) {
+              error.message = ret.message;
+            }
+            if(ret.alert) {
+              error.alert.description = ret.alert;
+            }
+            throw error;
+          }
+
+          // convert tls alert description to pki.certificateError
+          if(ret !== vfd) {
+            ret = _alertDescToCertError(ret);
+          }
+        }
+
+        return ret;
+      });
   } catch(ex) {
     // build tls error if not already customized
     var err = ex;
@@ -19382,7 +19236,6 @@ tls.createConnection = function(options) {
     virtualHost: options.virtualHost || null,
     verifyClient: options.verifyClient || false,
     verify: options.verify || function(cn, vfd, dpth, cts) {return vfd;},
-    verifyOptions: options.verifyOptions || {},
     getCertificate: options.getCertificate || null,
     getPrivateKey: options.getPrivateKey || null,
     getSignature: options.getSignature || null,
@@ -19912,10 +19765,6 @@ forge.tls.createSessionCache = tls.createSessionCache;
  *   verifyClient: true to require a client certificate in server mode,
  *     'optional' to request one, false not to (default: false).
  *   verify: a handler used to custom verify certificates in the chain.
- *   verifyOptions: an object with options for the certificate chain validation.
- *     See documentation of pki.verifyCertificateChain for possible options.
- *     verifyOptions.verify is ignored. If you wish to specify a verify handler
- *     use the verify key.
  *   getCertificate: an optional callback used to get a certificate or
  *     a chain of certificates (as an array).
  *   getPrivateKey: an optional callback used to get a private key.
@@ -19939,7 +19788,7 @@ forge.tls.createConnection = tls.createConnection;
 
 
 /***/ }),
-/* 21 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -19953,14 +19802,14 @@ forge.tls.createConnection = tls.createConnection;
 var forge = __webpack_require__(0);
 __webpack_require__(3);
 __webpack_require__(6);
-__webpack_require__(22);
+__webpack_require__(21);
 __webpack_require__(7);
 __webpack_require__(15);
 __webpack_require__(28);
-__webpack_require__(18);
+__webpack_require__(17);
 __webpack_require__(11);
 __webpack_require__(1);
-__webpack_require__(17);
+__webpack_require__(16);
 
 // shortcut for asn.1 API
 var asn1 = forge.asn1;
@@ -20047,7 +19896,7 @@ pki.privateKeyInfoToPem = function(pki, maxline) {
 
 
 /***/ }),
-/* 22 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -21076,6 +20925,12 @@ function createPbkdf2Params(salt, countBytes, dkLen, prfAlgorithm) {
 
 
 /***/ }),
+/* 22 */
+/***/ (function(module, exports) {
+
+/* (ignored) */
+
+/***/ }),
 /* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -21429,7 +21284,7 @@ __webpack_require__(1);
 var _crypto = null;
 if(forge.util.isNodejs && !forge.options.usePureJavaScript &&
   !process.versions['node-webkit']) {
-  _crypto = __webpack_require__(16);
+  _crypto = __webpack_require__(22);
 }
 
 /* PRNG API */
@@ -21681,12 +21536,13 @@ prng.create = function(plugin) {
   function defaultSeedFile(needed) {
     // use window.crypto.getRandomValues strong source of entropy if available
     var getRandomValues = null;
-    var globalScope = forge.util.globalScope;
-    var _crypto = globalScope.crypto || globalScope.msCrypto;
-    if(_crypto && _crypto.getRandomValues) {
-      getRandomValues = function(arr) {
-        return _crypto.getRandomValues(arr);
-      };
+    if(typeof window !== 'undefined') {
+      var _crypto = window.crypto || window.msCrypto;
+      if(_crypto && _crypto.getRandomValues) {
+        getRandomValues = function(arr) {
+          return _crypto.getRandomValues(arr);
+        };
+      }
     }
 
     var b = forge.util.createBuffer();
@@ -22938,12 +22794,12 @@ __webpack_require__(3);
 __webpack_require__(8);
 __webpack_require__(6);
 __webpack_require__(29);
-__webpack_require__(22);
+__webpack_require__(21);
 __webpack_require__(2);
 __webpack_require__(11);
 __webpack_require__(9);
 __webpack_require__(1);
-__webpack_require__(17);
+__webpack_require__(16);
 
 // shortcut for asn.1 & PKI API
 var asn1 = forge.asn1;
@@ -25386,63 +25242,36 @@ module.exports = __webpack_require__(35);
  */
 module.exports = __webpack_require__(0);
 __webpack_require__(5);
-__webpack_require__(38);
+__webpack_require__(37);
 __webpack_require__(3);
 __webpack_require__(13);
 __webpack_require__(31);
 __webpack_require__(10);
-__webpack_require__(40);
+__webpack_require__(39);
 __webpack_require__(8);
-__webpack_require__(41);
+__webpack_require__(40);
 __webpack_require__(33);
-__webpack_require__(42);
+__webpack_require__(41);
 __webpack_require__(30);
 __webpack_require__(15);
 __webpack_require__(7);
 __webpack_require__(26);
 __webpack_require__(28);
-__webpack_require__(43);
-__webpack_require__(21);
+__webpack_require__(42);
+__webpack_require__(20);
 __webpack_require__(27);
 __webpack_require__(24);
-__webpack_require__(18);
+__webpack_require__(17);
 __webpack_require__(2);
 __webpack_require__(25);
+__webpack_require__(43);
 __webpack_require__(44);
-__webpack_require__(45);
-__webpack_require__(20);
+__webpack_require__(19);
 __webpack_require__(1);
 
 
 /***/ }),
 /* 36 */
-/***/ (function(module, exports) {
-
-var g;
-
-// This works in non-strict mode
-g = (function() {
-	return this;
-})();
-
-try {
-	// This works if eval is allowed (see CSP)
-	g = g || Function("return this")() || (1,eval)("this");
-} catch(e) {
-	// This works if the window reference is available
-	if(typeof window === "object")
-		g = window;
-}
-
-// g can still be undefined, but nothing to do about it...
-// We return undefined, instead of nothing here, so it's
-// easier to handle this case. if(!global) { ...}
-
-module.exports = g;
-
-
-/***/ }),
-/* 37 */
 /***/ (function(module, exports) {
 
 /**
@@ -25634,7 +25463,7 @@ function _encodeWithByteBuffer(input, alphabet) {
 
 
 /***/ }),
-/* 38 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -25647,7 +25476,7 @@ function _encodeWithByteBuffer(input, alphabet) {
  */
 var forge = __webpack_require__(0);
 __webpack_require__(5);
-__webpack_require__(20);
+__webpack_require__(19);
 
 var tls = module.exports = forge.tls;
 
@@ -25924,7 +25753,7 @@ function compareMacs(key, mac1, mac2) {
 
 
 /***/ }),
-/* 39 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -25942,7 +25771,7 @@ forge.mgf.mgf1 = forge.mgf1;
 
 
 /***/ }),
-/* 40 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -26944,7 +26773,7 @@ function M(o, a, b) {
 
 
 /***/ }),
-/* 41 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -27118,7 +26947,7 @@ function _createKDF(kdf, md, counterStart, digestLength) {
 
 
 /***/ }),
-/* 42 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -27137,7 +26966,7 @@ __webpack_require__(32);
 
 
 /***/ }),
-/* 43 */
+/* 42 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -27167,7 +26996,7 @@ __webpack_require__(7);
 __webpack_require__(29);
 __webpack_require__(2);
 __webpack_require__(1);
-__webpack_require__(17);
+__webpack_require__(16);
 
 // shortcut for ASN.1 API
 var asn1 = forge.asn1;
@@ -28400,7 +28229,7 @@ function _decryptContent(msg) {
 
 
 /***/ }),
-/* 44 */
+/* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -28642,7 +28471,7 @@ function _sha1() {
 
 
 /***/ }),
-/* 45 */
+/* 44 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
